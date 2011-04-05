@@ -1,0 +1,122 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Search API saved searches
+ * module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function search_api_saved_searches_schema() {
+  $schema['search_api_saved_searches_settings'] = array(
+    'description' => 'The "saved searches" settings for a specific index.',
+    'fields' => array(
+      'delta' => array(
+        'description' => 'The {block}.delta used for these saved searches.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '0',
+      ),
+      'index_id' => array(
+        'description' => 'The {search_api_index}.machine_name this settings record is for.',
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'options' => array(
+        'description' => 'The actual settings for saved searches.',
+        'type' => 'blob',
+        'serialize' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array(
+      'index_id' => array('index_id'),
+    ),
+    'primary key' => array('delta'),
+  );
+  $schema['search_api_saved_search'] = array(
+    'description' => 'A saved search that will be periodically executed.',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for a saved search.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that created this saved search.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'name' => array(
+        'description' => 'The displayed name for a saved search.',
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'mail' => array(
+        'description' => 'The mail address that should receive notifications.',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => FALSE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the saved search was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'last_execute' => array(
+        'description' => 'The Unix timestamp when the saved search was last executed.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'interval' => array(
+        'description' => 'The interval in which this saved search will be checked for new results, in seconds.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'query' => array(
+        'description' => 'The actual search query to be executed.',
+        'type' => 'blob',
+        'serialize' => TRUE,
+        'not null' => TRUE,
+      ),
+      'options' => array(
+        'description' => 'Additional options for this saved search.',
+        'type' => 'blob',
+        'serialize' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array(
+      'uid' => array('uid'),
+      'mail' => array('mail'),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['search_api_saved_search_results'] = array(
+    'description' => 'The known results for a certain saved search.',
+    'fields' => array(
+      'search_id' => array(
+        'description' => 'The {search_api_saved_search}.id the result was for.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'result_id' => array(
+        'description' => 'The entity id of the returned result.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('search_id', 'result_id'),
+  );
+
+  return $schema;
+}
