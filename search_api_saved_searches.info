@@ -3,3 +3,5 @@ description = Offers users the ability to save executed searches and receive not
 dependencies[] = search_api
 core = 7.x
 package = Search
+
+files[] = search_api_saved_search.settings_entity.inc

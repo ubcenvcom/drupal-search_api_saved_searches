@@ -13,6 +13,12 @@ function search_api_saved_searches_schema() {
   $schema['search_api_saved_searches_settings'] = array(
     'description' => 'The "saved searches" settings for a specific index.',
     'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier for saved search settings.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
       'delta' => array(
         'description' => 'The {block}.delta used for these saved searches.',
         'type' => 'varchar',
@@ -36,8 +42,11 @@ function search_api_saved_searches_schema() {
     'indexes' => array(
       'index_id' => array('index_id'),
     ),
-    'primary key' => array('delta'),
-  );
+    'unique keys' => array(
+      'delta' => array('delta'),
+    ),
+    'primary key' => array('id'),
+  ) + entity_exportable_schema_fields();
   $schema['search_api_saved_search'] = array(
     'description' => 'A saved search that will be periodically executed.',
     'fields' => array(

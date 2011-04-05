@@ -4,4 +4,58 @@
  * @file Offers the ability to save searches and be notified of new results.
  */
 
+/**
+ * Implements hook_entity_info().
+ */
+function search_api_saved_searches_entity_info() {
+  $info['search_api_saved_searches_settings'] = array(
+    'label' => t('Saved search settings'),
+    'controller class' => 'EntityAPIController',
+    'entity class' => 'SearchApiSavedSearchesSettings',
+    'base table' => 'search_api_saved_searches_settings',
+    'uri callback' => 'search_api_saved_searches_settings_url',
+    'module' => 'search_api_saved_searches',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'name' => 'delta',
+    ),
+  );
 
+  return $info;
+}
+
+/**
+ * Loads a single settings object.
+ *
+ * @param $id
+ *   The settings' identifier or delta.
+ * @param $reset
+ *   If TRUE, will reset the internal entity cache.
+ */
+function search_api_saved_search_settings_load($id, $reset = FALSE) {
+  $ret = entity_load('search_api_saved_searches_settings', array($id), array(), $reset);
+  return $ret ? reset($ret) : FALSE;
+}
+
+/**
+ * Loads multiple settings objects.
+ *
+ * @param $ids
+ *   The settings' identifiers or deltas; or FALSE to load all settings objects.
+ * @param array $conditions
+ *   Associative array of field => value conditions that returned objects must
+ *   satisfy.
+ * @param $reset
+ *   If TRUE, will reset the internal entity cache.
+ */
+function search_api_saved_search_settings_load($ids = FALSE, array $conditions = array(), $reset = FALSE) {
+  return entity_load('search_api_saved_searches_settings', $ids, $conditions, $reset);
+}
+
+/**
+ * URL callback for settings entities.
+ */
+function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $settings) {
+  // @todo
+}
