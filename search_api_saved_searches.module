@@ -74,7 +74,7 @@ function search_api_saved_searches_entity_info() {
     'bundles' => array(),
   );
 
-  foreach (search_api_index_load_multiple(FALSE) as $index) {
+  foreach (db_query('SELECT name, machine_name FROM {search_api_index}') as $index) {
     $id = $index->machine_name;
     $info['search_api_saved_search']['bundles'][$id] = array(
       'label' => $index->name,
