@@ -10,6 +10,11 @@
  */
 class SearchApiSavedSearchesSettings extends Entity {
 
+  /**
+   * The search index these settings are for.
+   */
+  protected $index;
+
   // Database values that will be set when object is loaded
 
   /**
@@ -28,6 +33,11 @@ class SearchApiSavedSearchesSettings extends Entity {
   public $index_id;
 
   /**
+   * @var boolean
+   */
+  public $enabled;
+
+  /**
    * @var array
    */
   public $options;
@@ -37,6 +47,23 @@ class SearchApiSavedSearchesSettings extends Entity {
    */
   public function __construct(array $values = array()) {
     parent::__construct($values, 'search_api_saved_searches_settings');
+  }
+
+  /**
+   * @return SearchApiIndex
+   *   The index these saved search settings are for.
+   *
+   * @throws SearchApiException
+   *   If the index doesn't exist.
+   */
+  public function index() {
+    if (!isset($this->index)) {
+      $this->index = search_api_index_load($this->index_id);
+    }
+    if (!$this->index) {
+      throw new SearchApiException(t("The index with the ID %id doesn't exist, but has saved search settings attached."));
+    }
+    return $this->index;
   }
 
 }
