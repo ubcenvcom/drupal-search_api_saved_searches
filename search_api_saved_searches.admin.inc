@@ -87,3 +87,41 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
 
   return $form;
 }
+
+/**
+ * Form validation handler for search_api_saved_searches_index_edit().
+ *
+ * @see search_api_saved_searches_index_edit()
+ * @see search_api_saved_searches_index_edit_submit()
+ */
+function search_api_saved_searches_index_edit_validate(array $form, array &$form_state) {
+  // @todo Validate something here?
+}
+
+/**
+ * Form submission handler for search_api_saved_searches_index_edit().
+ *
+ * @see search_api_saved_searches_index_edit()
+ * @see search_api_saved_searches_index_edit_vaidate()
+ */
+function search_api_saved_searches_index_edit_submit(array $form, array &$form_state) {
+  $values = $form_state['values'];
+  $settings = $form_state['settings'];
+
+  $settings->enabled = $values['enabled'];
+  $settings->options = $values['options'];
+
+  $ret = $settings->save();
+  if ($ret === FALSE) {
+    drupal_set_message('An error occurred while trying to save the settings. Check the logs for details.', 'error');
+    $form_state['rebuild'] = TRUE;
+  }
+  else {
+    if ($ret == SAVED_NEW) {
+      search_api_saved_searches_add_interval_field($settings->index_id);
+      entity_info_cache_clear();
+      menu_cache_clear_all();
+    }
+    drupal_set_message('The settings were successfully saved.');
+  }
+}
