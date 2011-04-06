@@ -32,13 +32,20 @@ function search_api_saved_searches_schema() {
         'length' => 50,
         'not null' => TRUE,
       ),
+      'enabled' => array(
+        'description' => 'A flag indicating whether saved searches for this index are enabled.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
       'options' => array(
         'description' => 'The actual settings for saved searches.',
         'type' => 'blob',
         'serialize' => TRUE,
         'not null' => TRUE,
       ),
-    ),
+    ) + entity_exportable_schema_fields(),
     'indexes' => array(
       'index_id' => array('index_id'),
     ),
@@ -46,7 +53,7 @@ function search_api_saved_searches_schema() {
       'delta' => array('delta'),
     ),
     'primary key' => array('id'),
-  ) + entity_exportable_schema_fields();
+  );
   $schema['search_api_saved_search'] = array(
     'description' => 'A saved search that will be periodically executed.',
     'fields' => array(
@@ -134,4 +141,11 @@ function search_api_saved_searches_schema() {
   );
 
   return $schema;
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function search_api_saved_searches_uninstall() {
+  variable_del('search_api_saved_searches_search_ids');
 }
