@@ -5,6 +5,44 @@
  */
 
 /**
+ * Implements hook_menu().
+ */
+function search_api_saved_searches_menu() {
+  $items['admin/config/search/search_api/index/%search_api_index/saved_searches'] = array(
+    'title' => 'Saved searches',
+    'description' => 'Let users saves searches on this index.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('search_api_saved_searches_index_edit', 5),
+    'access arguments' => array('administer search_api_saved_searches'),
+    'weight' => -1,
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE | MENU_CONTEXT_PAGE,
+    'file' => 'search_api_saved_searches.admin.inc',
+  );
+  $items['admin/config/search/search_api/index/%search_api_index/saved_searches/edit'] = array(
+    'title' => 'Edit',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission();
+ */
+function search_api_saved_searches_permission() {
+  $perms['administer search_api_saved_searches'] = array(
+    'title' => t('Administer saved searches'),
+    'description' => t('Enable and configure saved searches for search indexes.'),
+  );
+  $perms['use search_api_saved_searches'] = array(
+    'title' => t('Use saved searches'),
+    'description' => t('Save searches and receive e-mail notifications.'),
+  );
+  return $perms;
+}
+
+/**
  * Implements hook_entity_info().
  */
 function search_api_saved_searches_entity_info() {
@@ -21,6 +59,33 @@ function search_api_saved_searches_entity_info() {
       'name' => 'delta',
     ),
   );
+  $info['search_api_saved_search'] = array(
+    'label' => t('Saved search'),
+    'base table' => 'search_api_saved_search',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'bundle' => 'index_id',
+      'label' => 'name',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'machine_name',
+    ),
+    'bundles' => array(),
+  );
+
+  foreach (search_api_index_load_multiple(FALSE) as $index) {
+    $id = $index->machine_name;
+    $info['search_api_saved_search']['bundles'][$id] = array(
+      'label' => $index->name,
+      'admin' => array(
+        'path' => 'admin/config/search/search_api/index/%search_api_index/saved_searches',
+        'bundle argument' => 5,
+        'real path' => 'admin/config/search/search_api/index/' . $id . '/saved_searches/edit',
+        'access arguments' => array('administer search_api_saved_searches'),
+      ),
+    );
+  }
 
   return $info;
 }
@@ -33,7 +98,7 @@ function search_api_saved_searches_entity_info() {
  * @param $reset
  *   If TRUE, will reset the internal entity cache.
  */
-function search_api_saved_search_settings_load($id, $reset = FALSE) {
+function search_api_saved_searches_settings_load($id, $reset = FALSE) {
   $ret = entity_load('search_api_saved_searches_settings', array($id), array(), $reset);
   return $ret ? reset($ret) : FALSE;
 }
@@ -49,7 +114,7 @@ function search_api_saved_search_settings_load($id, $reset = FALSE) {
  * @param $reset
  *   If TRUE, will reset the internal entity cache.
  */
-function search_api_saved_search_settings_load($ids = FALSE, array $conditions = array(), $reset = FALSE) {
+function search_api_saved_searches_settings_load_multiple($ids = FALSE, array $conditions = array(), $reset = FALSE) {
   return entity_load('search_api_saved_searches_settings', $ids, $conditions, $reset);
 }
 
@@ -58,4 +123,43 @@ function search_api_saved_search_settings_load($ids = FALSE, array $conditions =
  */
 function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $settings) {
   // @todo
+}
+
+/**
+ * Add the interval field to a saved search bundle.
+ *
+ * @param $id
+ *   The machine name of the index for which to add the field.
+ *
+ * @return
+ *   Interval field instance.
+ */
+function search_api_saved_searches_add_interval_field($id) {
+  $field = field_info_field('search_api_saved_searches_interval');
+  $instance = field_info_instance('search_api_saved_search', 'search_api_saved_searches_interval', $id);
+  if (empty($field)) {
+    $field = array(
+      'field_name' => 'search_api_saved_searches_interval',
+      'type' => 'list_integer',
+      'entity_types' => array('search_api_saved_search'),
+      'translatable' => TRUE,
+    );
+    $field = field_create_field($field);
+  }
+  if (empty($instance)) {
+    $instance = array(
+      'field_name' => 'search_api_saved_searches_interval',
+      'entity_type' => 'search_api_saved_search',
+      'bundle' => $id,
+      'label' => t('Interval'),
+      'widget_type' => 'options_select',
+      'settings' => array('allowed_values' => array(
+        3600 => t('Hourly'),
+        3600 * 24 => t('Daily'),
+        3600 * 24 * 7 => t('Weekly'),
+      )),
+    );
+    $instance = field_create_instance($instance);
+  }
+  return $instance;
 }
