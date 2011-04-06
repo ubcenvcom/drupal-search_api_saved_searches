@@ -74,14 +74,18 @@ function search_api_saved_searches_entity_info() {
     'bundles' => array(),
   );
 
-  foreach (db_query('SELECT name, machine_name FROM {search_api_index}') as $index) {
-    $id = $index->machine_name;
+  $query = db_select('search_api_saved_searches_settings', 's')
+    ->fields('s', array('index_id'));
+  $query = db_select('search_api_index', 'i')
+    ->fields('i', array('machine_name', 'name'))
+    ->condition('machine_name', $query, 'IN');
+  foreach ($query->execute()->fetchAllKeyed() as $id => $name) {
     $info['search_api_saved_search']['bundles'][$id] = array(
-      'label' => $index->name,
+      'label' => $name,
       'admin' => array(
         'path' => 'admin/config/search/search_api/index/%search_api_index/saved_searches',
         'bundle argument' => 5,
-        'real path' => 'admin/config/search/search_api/index/' . $id . '/saved_searches/edit',
+        'real path' => 'admin/config/search/search_api/index/' . $id . '/saved_searches',
         'access arguments' => array('administer search_api_saved_searches'),
       ),
     );
@@ -91,12 +95,26 @@ function search_api_saved_searches_entity_info() {
 }
 
 /**
+ * Implements hook_search_api_index_delete().
+ *
+ * Deletes the settings associated with a search index.
+ */
+function search_api_saved_searches_search_api_index_delete(SearchApiIndex $index) {
+  foreach (search_api_saved_searches_settings_load_multiple(FALSE, array('index_id' => $index->machine_name)) as $settings) {
+    $settings->delete();
+  }
+}
+
+/**
  * Loads a single settings object.
  *
  * @param $id
  *   The settings' identifier or delta.
  * @param $reset
  *   If TRUE, will reset the internal entity cache.
+ *
+ * @return SearchApiSavedSearchesSettings
+ *   The requested entity, or FALSE if no settings for that ID exist.
  */
 function search_api_saved_searches_settings_load($id, $reset = FALSE) {
   $ret = entity_load('search_api_saved_searches_settings', array($id), array(), $reset);
@@ -113,6 +131,9 @@ function search_api_saved_searches_settings_load($id, $reset = FALSE) {
  *   satisfy.
  * @param $reset
  *   If TRUE, will reset the internal entity cache.
+ *
+ * @return array
+ *   An array of SearchApiSavedSearchesSettings objects matching the conditions.
  */
 function search_api_saved_searches_settings_load_multiple($ids = FALSE, array $conditions = array(), $reset = FALSE) {
   return entity_load('search_api_saved_searches_settings', $ids, $conditions, $reset);
@@ -122,7 +143,7 @@ function search_api_saved_searches_settings_load_multiple($ids = FALSE, array $c
  * URL callback for settings entities.
  */
 function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $settings) {
-  // @todo
+  return array('path' => 'admin/config/search/search_api/index/' . $settings->index_id . '/saved_searches');
 }
 
 /**
@@ -135,11 +156,11 @@ function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $
  *   Interval field instance.
  */
 function search_api_saved_searches_add_interval_field($id) {
-  $field = field_info_field('search_api_saved_searches_interval');
-  $instance = field_info_instance('search_api_saved_search', 'search_api_saved_searches_interval', $id);
+  $field = field_info_field('search_api_saved_search_interval');
+  $instance = field_info_instance('search_api_saved_search', 'search_api_saved_search_interval', $id);
   if (empty($field)) {
     $field = array(
-      'field_name' => 'search_api_saved_searches_interval',
+      'field_name' => 'search_api_saved_search_interval',
       'type' => 'list_integer',
       'entity_types' => array('search_api_saved_search'),
       'translatable' => TRUE,
@@ -148,7 +169,7 @@ function search_api_saved_searches_add_interval_field($id) {
   }
   if (empty($instance)) {
     $instance = array(
-      'field_name' => 'search_api_saved_searches_interval',
+      'field_name' => 'search_api_saved_search_interval',
       'entity_type' => 'search_api_saved_search',
       'bundle' => $id,
       'label' => t('Interval'),
@@ -158,6 +179,7 @@ function search_api_saved_searches_add_interval_field($id) {
         3600 * 24 => t('Daily'),
         3600 * 24 * 7 => t('Weekly'),
       )),
+      'default_value' => 3600 * 24,
     );
     $instance = field_create_instance($instance);
   }
