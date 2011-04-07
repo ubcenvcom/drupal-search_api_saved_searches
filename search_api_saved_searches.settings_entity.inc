@@ -12,6 +12,8 @@ class SearchApiSavedSearchesSettings extends Entity {
 
   /**
    * The search index these settings are for.
+   *
+   * @var SearchApiIndex
    */
   protected $index;
 
@@ -61,7 +63,7 @@ class SearchApiSavedSearchesSettings extends Entity {
       $this->index = search_api_index_load($this->index_id);
     }
     if (!$this->index) {
-      throw new SearchApiException(t("The index with the ID %id doesn't exist, but has saved search settings attached."));
+      throw new SearchApiException(t("The index with the ID %id doesn't exist, but has saved search settings attached.", array('%id' => $this->index_id)));
     }
     return $this->index;
   }

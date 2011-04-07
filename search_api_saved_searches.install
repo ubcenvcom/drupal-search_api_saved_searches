@@ -69,8 +69,8 @@ function search_api_saved_searches_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'index_id' => array(
-        'description' => 'The {search_api_index}.machine_name this saved search is for.',
+      'settings_id' => array(
+        'description' => 'The {search_api_saved_searches_settings}.delta this saved search uses.',
         'type' => 'varchar',
         'length' => 50,
         'not null' => TRUE,

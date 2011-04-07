@@ -19,10 +19,6 @@ function search_api_saved_searches_menu() {
     'context' => MENU_CONTEXT_INLINE | MENU_CONTEXT_PAGE,
     'file' => 'search_api_saved_searches.admin.inc',
   );
-  $items['admin/config/search/search_api/index/%search_api_index/saved_searches/edit'] = array(
-    'title' => 'Edit',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
 
   return $items;
 }
@@ -61,35 +57,16 @@ function search_api_saved_searches_entity_info() {
   );
   $info['search_api_saved_search'] = array(
     'label' => t('Saved search'),
+    'controller class' => 'EntityAPIController',
+    'entity class' => 'SearchApiSavedSearch',
     'base table' => 'search_api_saved_search',
-    'fieldable' => TRUE,
+    'module' => 'search_api_saved_searches',
+    'exportable' => FALSE,
     'entity keys' => array(
       'id' => 'id',
-      'bundle' => 'index_id',
       'label' => 'name',
     ),
-    'bundle keys' => array(
-      'bundle' => 'machine_name',
-    ),
-    'bundles' => array(),
   );
-
-  $query = db_select('search_api_saved_searches_settings', 's')
-    ->fields('s', array('index_id'));
-  $query = db_select('search_api_index', 'i')
-    ->fields('i', array('machine_name', 'name'))
-    ->condition('machine_name', $query, 'IN');
-  foreach ($query->execute()->fetchAllKeyed() as $id => $name) {
-    $info['search_api_saved_search']['bundles'][$id] = array(
-      'label' => $name,
-      'admin' => array(
-        'path' => 'admin/config/search/search_api/index/%search_api_index/saved_searches',
-        'bundle argument' => 5,
-        'real path' => 'admin/config/search/search_api/index/' . $id . '/saved_searches',
-        'access arguments' => array('administer search_api_saved_searches'),
-      ),
-    );
-  }
 
   return $info;
 }
@@ -102,6 +79,15 @@ function search_api_saved_searches_entity_info() {
 function search_api_saved_searches_search_api_index_delete(SearchApiIndex $index) {
   foreach (search_api_saved_searches_settings_load_multiple(FALSE, array('index_id' => $index->machine_name)) as $settings) {
     $settings->delete();
+  }
+}
+
+/**
+ * Implements hook_search_api_saved_searches_settings_delete().
+ */
+function search_api_saved_searches_search_api_saved_searches_settings_delete(SearchApiSavedSearchesSettings $settings) {
+  foreach (search_api_saved_search_load_multiple(FALSE, array('settings_id' => $settings->delta)) as $search) {
+    $search->delete();
   }
 }
 
@@ -140,48 +126,42 @@ function search_api_saved_searches_settings_load_multiple($ids = FALSE, array $c
 }
 
 /**
+ * Loads a single saved search object.
+ *
+ * @param $id
+ *   The saved search's ID.
+ * @param $reset
+ *   If TRUE, will reset the internal entity cache.
+ *
+ * @return SearchApiSavedSearch
+ *   The requested entity, or FALSE if no settings for that ID exist.
+ */
+function search_api_saved_search_load($id, $reset = FALSE) {
+  $ret = entity_load('search_api_saved_search', array($id), array(), $reset);
+  return $ret ? reset($ret) : FALSE;
+}
+
+/**
+ * Loads multiple saved search objects.
+ *
+ * @param $ids
+ *   The saved search's IDs; or FALSE to load all saved searches.
+ * @param array $conditions
+ *   Associative array of field => value conditions that returned objects must
+ *   satisfy.
+ * @param $reset
+ *   If TRUE, will reset the internal entity cache.
+ *
+ * @return array
+ *   An array of SearchApiSavedSearch objects matching the conditions.
+ */
+function search_api_saved_search_load_multiple($ids = FALSE, array $conditions = array(), $reset = FALSE) {
+  return entity_load('search_api_saved_search', $ids, $conditions, $reset);
+}
+
+/**
  * URL callback for settings entities.
  */
 function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $settings) {
   return array('path' => 'admin/config/search/search_api/index/' . $settings->index_id . '/saved_searches');
-}
-
-/**
- * Add the interval field to a saved search bundle.
- *
- * @param $id
- *   The machine name of the index for which to add the field.
- *
- * @return
- *   Interval field instance.
- */
-function search_api_saved_searches_add_interval_field($id) {
-  $field = field_info_field('search_api_saved_search_interval');
-  $instance = field_info_instance('search_api_saved_search', 'search_api_saved_search_interval', $id);
-  if (empty($field)) {
-    $field = array(
-      'field_name' => 'search_api_saved_search_interval',
-      'type' => 'list_integer',
-      'entity_types' => array('search_api_saved_search'),
-      'translatable' => TRUE,
-    );
-    $field = field_create_field($field);
-  }
-  if (empty($instance)) {
-    $instance = array(
-      'field_name' => 'search_api_saved_search_interval',
-      'entity_type' => 'search_api_saved_search',
-      'bundle' => $id,
-      'label' => t('Interval'),
-      'widget_type' => 'options_select',
-      'settings' => array('allowed_values' => array(
-        3600 => t('Hourly'),
-        3600 * 24 => t('Daily'),
-        3600 * 24 * 7 => t('Weekly'),
-      )),
-      'default_value' => 3600 * 24,
-    );
-    $instance = field_create_instance($instance);
-  }
-  return $instance;
 }

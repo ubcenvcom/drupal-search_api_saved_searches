@@ -117,11 +117,6 @@ function search_api_saved_searches_index_edit_submit(array $form, array &$form_s
     $form_state['rebuild'] = TRUE;
   }
   else {
-    if ($ret == SAVED_NEW) {
-      search_api_saved_searches_add_interval_field($settings->index_id);
-      entity_info_cache_clear();
-      menu_cache_clear_all();
-    }
     drupal_set_message('The settings were successfully saved.');
   }
 }
