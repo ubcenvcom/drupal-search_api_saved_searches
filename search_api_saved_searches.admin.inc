@@ -25,6 +25,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
       'options' => array(),
     ));
   }
+  // Set default options.
   $settings->options += array(
     'default_true' => TRUE,
     'ids_list' => array(),
@@ -34,10 +35,67 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
       60 * 60 * 24 * 7 => t('Weekly'),
     ),
     'set_interval' => 60 * 60 * 24,
+    'mail' => array(),
   );
+  $settings->options['mail'] += array(
+    'html' => FALSE,
+    'title' => t('New results for your saved search at [site:name]'),
+    'body' => t('[user:name],
+
+There are new results for your saved search on [site:name]:
+
+[search-api-saved-searches:results]
+
+You can configure your saved searches at the following address:
+[user:search-api-saved-searches-url]
+
+--  [site:name] team'),
+    'results' => "[search-api-saved-search:name]:\n[search-api-saved-search:items]\n" .
+        t('Delete this saved search: !url', array('!url' => '[search-api-saved-search:delete-url]')),
+    'result' => NULL,
+  );
+  if (!isset($settings->options['mail']['result'])) {
+    // This is done extra, if necessary, as it requires some computing.
+    // And some guessing.
+    $tokens = token_info();
+    $type = $index->entity_type;
+    if (empty($tokens['types'][$type])) {
+      foreach ($tokens['types'] as $k => $v) {
+        if (isset($v['needs-data']) && $v['needs-data'] == $type) {
+          $type = $k;
+          break;
+        }
+      }
+    }
+    $entity_info = entity_get_info($type);
+    if (isset($entity_info['entity keys']['label']) && isset($tokens['tokens'][$type][$entity_info['entity keys']['label']])) {
+      $label = '[' . $type . ':' . $entity_info['entity keys']['label'] . ']';
+    }
+    elseif (isset($tokens['tokens'][$type][$entity_info['entity keys']['id']])) {
+      $label = '[' . $type . ':' . $entity_info['entity keys']['id'] . ']';
+    }
+    elseif (isset($tokens['tokens'][$type]['label'])) {
+      $label = "[$type:label]";
+    }
+    elseif (isset($tokens['tokens'][$type]['name'])) {
+      $label = "[$type:name]";
+    }
+    else {
+      $label = '';
+    }
+    if (isset($tokens['tokens'][$type]['url'])) {
+      $url = " ([$type:url])";
+    }
+    else {
+      $url = '';
+    }
+
+    $settings->options['mail']['result'] = "- $label$url";
+  }
   $form_state['settings'] = $settings;
   $options = $settings->options;
 
+  $form['#tree'] = TRUE;
   $form['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable'),
@@ -47,7 +105,6 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
   $form['options'] = array(
     '#type' => 'fieldset',
     '#title' => t('Settings'),
-    '#tree' => TRUE,
     '#states' => array(
       'invisible' => array(
         ':input[name="enabled"]' => array('checked' =>FALSE),
@@ -88,6 +145,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
   $form['options']['interval'] = array(
     '#type' => 'fieldset',
     '#title' => t('Notification interval'),
+    '#collapsible' => TRUE,
   );
   $form['options']['interval']['user_select_interval'] = array(
     '#type' => 'checkbox',
@@ -96,7 +154,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
   );
   $interval_options = array();
   foreach ($options['interval_options'] as $k => $v) {
-    $interval_options[] = "$k|$v";
+    $interval_options[] = "$k | $v";
   }
   $interval_options = implode("\n", $interval_options);
   $form['options']['interval']['interval_options'] = array(
@@ -140,7 +198,60 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
     ),
   );
 
-  // @todo Add e-mail text options and options for creating a creation form.
+  $form['options']['mail'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('E-mail format'),
+    '#collapsible' => TRUE,
+  );
+  $form['options']['mail']['html'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Send HTML mails'),
+    '#description' => t('Use full HTML for the mail body, instead of sending it in plain text.'),
+    '#default_value' => $options['mail']['html'],
+  );
+  $form['options']['mail']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#description' => t("Enter the notification mail's subject.") . ' ' . t('Available variables are: @vars.',
+        array('@vars' => '[site:name], [user:name], [user:mail]')),
+    '#default_value' => $options['mail']['title'],
+  );
+  $form['options']['mail']['body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#description' => t("Enter the notification mail's body.") . ' ' . t('Available variables are: @vars.',
+        array('@vars' => '[site:name], [site:url], [user:name], [user:mail], [site:url-brief], ' .
+            '[search-api-saved-searches:results], [user:search-api-saved-searches-url]')) . ' ' .
+        t('The replacement for [search-api-saved-searches:results] can be configured below.'),
+    '#default_value' => $options['mail']['body'],
+    '#rows' => 12,
+  );
+  $form['options']['mail']['results'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Results replacement'),
+    '#description' => t('Enter the text that will replace the [search-api-saved-searches:results] variable above. If there are new results for several saved searches of a single user, this text will be inserted multiple times.') . ' ' .
+        t('Available variables are: @vars.',
+        array('@vars' => '[site:url], [search-api-saved-search:name], [search-api-saved-search:created], ' .
+            '[search-api-saved-search:items], [search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')) . ' ' .
+        t('The replacement for [search-api-saved-search:items] can be configured below.'),
+    '#default_value' => $options['mail']['results'],
+    '#rows' => 5,
+  );
+  $form['options']['mail']['result'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Result item replacement'),
+    '#description' => t('Enter the text that will replace the [search-api-saved-search:items] variable above. This text will be inserted on a new line once for every new result.') . ' ' .
+        t('Available variables are: @vars.',
+        array('@vars' => '[site:url], [search-api-saved-search-result:label], [search-api-saved-search-result:url], ' .
+            '[search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')),
+    '#default_value' => $options['mail']['result'],
+    '#rows' => 2,
+  );
+
+  // @todo Access options? Maximum number of saved searches per user, maximum
+  //   number of results to create saved search, … ?
+
+  // @todo Options for creating a creation form.
 
   $form['submit'] = array(
     '#type' => 'submit',
