@@ -73,6 +73,16 @@ function search_api_saved_searches_entity_info() {
 }
 
 /**
+ * URL callback for settings entities.
+ */
+function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $settings) {
+  return array('path' => 'admin/config/search/search_api/index/' . $settings->index_id . '/saved_searches');
+}
+
+// @todo Implement hook_user_*() to automatically assign users all saved
+//   searches with their mail address after registration.
+
+/**
  * Implements hook_search_api_index_delete().
  *
  * Deletes the settings associated with a search index.
@@ -161,8 +171,69 @@ function search_api_saved_search_load_multiple($ids = FALSE, array $conditions =
 }
 
 /**
- * URL callback for settings entities.
+ * Determine whether the current user can create a saved search for specific settings.
+ *
+ * @param SearchApiSavedSearchesSettings $settings
+ *   The settings to check for.
+ *
+ * @return boolean
+ *   TRUE iff the current user is allowed to create a new saved search.
  */
-function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $settings) {
-  return array('path' => 'admin/config/search/search_api/index/' . $settings->index_id . '/saved_searches');
+function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $settings) {
+  if (!$settings->enabled) {
+    return FALSE;
+  }
+
+  if (user_access('administer search_api_saved_searches')) {
+    return TRUE;
+  }
+  if (!user_access('use search_api_saved_searches')) {
+    return FALSE;
+  }
+
+  // @todo Check settings-specific access rules, when there are any.
+
+  return TRUE;
+}
+
+/**
+ * Determine access to the edit interface for saved searches of a given user.
+ *
+ * This is both used to determine whether the current user can edit a specific
+ * saved search, or whether she can display the overview of the user's saved
+ * searches.
+ * For anonymous users' searches an access key is generated that allows
+ * accessing and editing the searches.
+ *
+ * @param $account
+ *   The user whose saved search(es) would be edited.
+ * @param SearchApiSavedSearch $search
+ *   (optional) The saved search involved, if there is just a single one.
+ * @param string $key
+ *   (optional) The saved search involved, if there is just a single one.
+ *
+ * @return boolean
+ *   TRUE iff the current user is allowed to edit the saved search(es).
+ */
+function search_api_saved_search_edit_access($account, SearchApiSavedSearch $search = NULL, $key = NULL) {
+  global $user;
+
+  if (user_access('administer search_api_saved_searches')) {
+    return TRUE;
+  }
+  // Barring admins, the only way to edit anonymous users' saved searches is by
+  // providing the access key. There is no overview of all saved searches.
+  if ($account->uid == 0) {
+    if (empty($search) || empty($key)) {
+      return FALSE;
+    }
+    return isset($search->options['key']) && $search->options['key'] == $key;
+  }
+  if ($account->uid != $user->uid || !user_access('use search_api_saved_searches')) {
+    return FALSE;
+  }
+  if (isset($search) && $search->uid != $account->uid) {
+    return FALSE;
+  }
+  return TRUE;
 }
