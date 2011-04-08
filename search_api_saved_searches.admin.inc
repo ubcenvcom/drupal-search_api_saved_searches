@@ -129,12 +129,11 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
   $form['options']['interval']['set_interval_custom'] = array(
     '#type' => 'textfield',
     '#description' => t('Enter the custom notification interval, in seconds.'),
-    '#options' => $interval_options,
     '#default_value' => isset($interval_options[$options['set_interval']]) ? $options['set_interval'] : 0,
     '#states' => array(
       'visible' => array(
         ':input[name="options[interval][set_interval]"]' => array(
-          //'visible' => TRUE,
+          'visible' => TRUE,
           'value' => '0',
         ),
       ),
@@ -158,7 +157,32 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
  * @see search_api_saved_searches_index_edit_submit()
  */
 function search_api_saved_searches_index_edit_validate(array $form, array &$form_state) {
-  // @todo Validate something here?
+  $values = &$form_state['values'];
+  $interval_options = $values['options']['interval']['interval_options'];
+  $values['options']['interval']['interval_options'] = array();
+  foreach (explode("\n", $interval_options) as $line) {
+    $parts = explode('|', $line, 2);
+    if (count($parts) == 1) {
+      $k = $v = trim($line);
+    }
+    else {
+      list($k, $v) = array_map('trim', $parts);
+    }
+    $values['options']['interval']['interval_options'][$k] = $v;
+  }
+  if ($values['options']['interval']['user_select_interval']) {
+    foreach ($values['options']['interval']['interval_options'] as $k => $v) {
+      if (!preg_match('/^-?\d+$/', $k)) {
+        form_error($form['options']['interval']['interval_options'], t('"@input" is not a valid integer. Only integers can be used as intervals.', array('@input' => $k)));
+      }
+    }
+  }
+  elseif ($values['options']['interval']['set_interval'] == 0) {
+    $v = $values['options']['interval']['set_interval_custom'];
+    if (!preg_match('/^-?\d+$/', $v)) {
+      form_error($form['options']['interval']['set_interval_custom'], t('"@input" is not a valid integer. Only integers can be used as intervals.', array('@input' => $v)));
+    }
+  }
 }
 
 /**
@@ -171,8 +195,16 @@ function search_api_saved_searches_index_edit_submit(array $form, array &$form_s
   $values = $form_state['values'];
   $settings = $form_state['settings'];
 
+  $options = $values['options'];
+  $options += $options['interval'];
+  unset($options['interval']);
+  if ($options['set_interval'] == 0) {
+    $options['set_interval'] = $options['set_interval_custom'];
+  }
+  unset($options['set_interval_custom']);
+
   $settings->enabled = $values['enabled'];
-  $settings->options = $values['options'];
+  $settings->options = $options;
 
   $ret = $settings->save();
   if ($ret === FALSE) {
