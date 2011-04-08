@@ -1,8 +1,8 @@
 <?php
 
 /**
- * @file Contains the entity class for stored "Saved searches" settings of
- *   search indexes.
+ * @file
+ * Contains the entity class for saved searches.
  */
 
 /**
