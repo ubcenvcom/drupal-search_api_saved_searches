@@ -432,7 +432,9 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
  * @see search_api_saved_searches_save_form_edit_submit()
  */
 function search_api_saved_searches_save_form_edit_validate(array $form, array &$form_state) {
-  // @todo Validate e-mail address. Anything else?
+  if ($msg = user_validate_mail($form_state['values']['mail'])) {
+    form_error($form['mail'], $msg);
+  }
 }
 
 /**
