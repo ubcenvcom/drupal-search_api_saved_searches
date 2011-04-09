@@ -111,11 +111,41 @@ function search_api_saved_searches_search_api_index_delete(SearchApiIndex $index
 }
 
 /**
+ * Implements hook_search_api_saved_searches_settings_insert().
+ *
+ * Clear block caches when new enabled saved search settings are saved.
+ */
+function search_api_saved_searches_search_api_saved_searches_settings_insert(SearchApiSavedSearchesSettings $settings) {
+  if ($settings->enabled) {
+    block_flush_caches();
+    cache_clear_all('*', 'cache_block', TRUE);
+  }
+}
+
+/**
+ * Implements hook_search_api_saved_searches_settings_update().
+ *
+ * Clear block caches when saved search settings are enabled or disabled.
+ */
+function search_api_saved_searches_search_api_saved_searches_settings_update(SearchApiSavedSearchesSettings $settings) {
+  if ($settings->enabled != $settings->original->enabled) {
+    block_flush_caches();
+    cache_clear_all('*', 'cache_block', TRUE);
+  }
+}
+
+/**
  * Implements hook_search_api_saved_searches_settings_delete().
+ *
+ * Clear block caches when enabled saved search settings are deleted.
  */
 function search_api_saved_searches_search_api_saved_searches_settings_delete(SearchApiSavedSearchesSettings $settings) {
   foreach (search_api_saved_search_load_multiple(FALSE, array('settings_id' => $settings->delta)) as $search) {
     $search->delete();
+  }
+  if ($settings->enabled) {
+    block_flush_caches();
+    cache_clear_all('*', 'cache_block', TRUE);
   }
 }
 
@@ -256,10 +286,161 @@ function search_api_saved_search_edit_access($account, SearchApiSavedSearch $sea
 }
 
 /**
- * Implements _block_info().
+ * Implements hook_block_info().
  */
 function search_api_saved_searches_block_info() {
+  $blocks = array();
   foreach (search_api_saved_searches_settings_load_multiple(FALSE, array('enabled' => TRUE)) as $settings) {
-
+    try {
+      $blocks[$settings->delta] = array(
+        'info' => t('!index: Save search', array('!index' => $settings->index()->name)),
+        // @todo Is this cache setting correct?
+        'cache' => DRUPAL_CACHE_PER_ROLE | DRUPAL_CACHE_PER_PAGE,
+      );
+    }
+    catch (SearchApiException $e) {}
   }
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function search_api_saved_searches_block_configure($delta = '') {
+  $settings = search_api_saved_searches_settings_load($delta);
+  $form['settings_link'] = array(
+    '#markup' => l(t('To saved search settings'), 'admin/config/search/search_api/index/' . $settings->index_id . '/saved_searches'),
+  );
+  return $form;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function search_api_saved_searches_block_view($delta = '') {
+  $searches = search_api_current_search();
+  if (!$searches) {
+    return;
+  }
+  if (!user_access('use search_api_saved_searches')) {
+    return;
+  }
+  $settings = search_api_saved_searches_settings_load($delta);
+  if (!$settings || !search_api_saved_search_create_access($settings)) {
+    return;
+  }
+  $index_id = $settings->index_id;
+  $options = $settings->options;
+  $ids_list = drupal_map_assoc($options['ids_list']);
+  $search_ids = variable_get('search_api_saved_searches_search_ids', array());
+  foreach ($searches as $id => $data) {
+    if ($data[0]->getIndex()->machine_name == $index_id){
+      if (!isset($search_ids[$index_id][$id])) {
+        $search_ids[$index_id][$id] = $id;
+        $search_ids_updated = TRUE;
+      }
+      if (isset($ids_list[$id]) != $options['default_true']) {
+        if (isset($query)) {
+          watchdog('search_api_saved_searches', 'Two matching searches on index %index for saved search block.',
+              array('%index' => $settings->index()->name), WATCHDOG_WARNING,
+              l(t('view page'), $_GET['q'], array('query' => drupal_get_query_parameters())));
+        }
+        else {
+          list($query, $results) = $data;
+        }
+      }
+    }
+  }
+  if (isset($search_ids_updated)) {
+    variable_set('search_api_saved_searches_search_ids', $search_ids);
+  }
+  if (empty($query)) {
+    return;
+  }
+
+  return array(
+    'subject' => t('Save search'),
+    'content' => drupal_get_form('search_api_saved_searches_save_form', $settings, $query),
+  );
+}
+
+/**
+ * Form builder for creating a new saved search.
+ *
+ * @param SearchApiSavedSearchesSettings $settings
+ *   The saved search settings with which to create a new saved search.
+ * @param SearchApiQueryInterface $query
+ *   (optional) If creating a saved search for an already executed query, the
+ *   query.
+ *
+ * @see search_api_saved_searches_save_form_edit_validate()
+ * @see search_api_saved_searches_save_form_edit_submit()
+ * @ingroup forms
+ */
+function search_api_saved_searches_save_form(array $form, array &$form_state, SearchApiSavedSearchesSettings $settings, SearchApiQueryInterface $query = NULL) {
+  global $user;
+
+  if (!isset($form_state['query']) && isset($query)) {
+    $form_state['query'] = array(
+      'index_id' => $query->getIndex()->machine_name,
+      'keys' => $query->getKeys(),
+      'fields' => $query->getFields(),
+      'filters' => $query->getFilter()->getFilters(),
+      'options' => $query->getOptions(),
+    );
+    $form_state['query']['options']['search id'] = $query->getIndex()->machine_name . ':' . 'saved-search';
+  }
+
+  // @todo if (empty($form_state['query'])) -> provide advanced creation form.
+
+  $form['mail'] = array(
+    '#type' => 'textfield',
+    '#title' => t('E-mail address'),
+    '#maxlength' => 100,
+    '#size' => 16,
+    '#default_value' => $user->mail,
+    '#required' => TRUE,
+  );
+
+  if ($settings->options['user_select_interval'] && count($settings->options['interval_options']) > 1) {
+    $form['interval'] = array(
+      '#type' => 'select',
+      '#title' => t('Notification interval'),
+      '#options' => $settings->options['interval_options'],
+      '#required' => TRUE,
+    );
+  }
+  else {
+    $form['interval'] = array(
+      '#type' => 'value',
+      '#value' => $settings->options['user_select_interval'] ? reset($settings->options['interval_options']) : $settings->options['set_interval'],
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save search'),
+  );
+
+  return $form;
+}
+
+/**
+ * Form validation handler for search_api_saved_searches_save_form().
+ *
+ * @see search_api_saved_searches_save_form()
+ * @see search_api_saved_searches_save_form_edit_submit()
+ */
+function search_api_saved_searches_save_form_edit_validate(array $form, array &$form_state) {
+  // @todo Validate e-mail address. Anything else?
+}
+
+/**
+ * Form validation handler for search_api_saved_searches_save_form().
+ *
+ * @see search_api_saved_searches_save_form()
+ * @see search_api_saved_searches_save_form_edit_validate()
+ */
+function search_api_saved_searches_save_form_edit_submit(array $form, array &$form_state) {
+  // @todo Implement.
 }
