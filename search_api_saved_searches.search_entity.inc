@@ -57,9 +57,26 @@ class SearchApiSavedSearch extends Entity {
   public $created;
 
   /**
-   * @var boolean
+   * @var integer
    */
-  public $enabled;
+  public $last_execute;
+
+  /**
+   * @var integer
+   */
+  public $interval;
+
+  /**
+   * Array representing the search query to execute, containing:
+   *   index_id: The search index's machine name.
+   *   keys: The parsed fulltext keys.
+   *   fields: The fields that will be fulltext-searched.
+   *   filters: An array of filters, as used in SearchApiQueryFilterInterface.
+   *   options: The query options.
+   *
+   * @var array
+   */
+  public $query;
 
   /**
    * @var array
