@@ -150,6 +150,15 @@ function search_api_saved_searches_search_api_saved_searches_settings_delete(Sea
 }
 
 /**
+ * Implements hook_search_api_saved_search_insert().
+ *
+ * Save all current search results.
+ */
+function search_api_saved_searches_search_api_saved_search_insert(SearchApiSavedSearch $search) {
+  // @todo Implement.
+}
+
+/**
  * Loads a single settings object.
  *
  * @param $id
@@ -384,15 +393,21 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
     $form_state['query'] = array(
       'index_id' => $query->getIndex()->machine_name,
       'keys' => $query->getKeys(),
+      'original_keys' => $query->getOriginalKeys(),
       'fields' => $query->getFields(),
       'filters' => $query->getFilter()->getFilters(),
       'options' => $query->getOptions(),
     );
     $form_state['query']['options']['search id'] = $query->getIndex()->machine_name . ':' . 'saved-search';
   }
+  $form_state['settings'] = $settings;
 
   // @todo if (empty($form_state['query'])) -> provide advanced creation form.
 
+  $form['name'] = array(
+    '#type' => 'value',
+    '#value' => _search_api_saved_searches_create_name($form_state['query']),
+  );
   $form['mail'] = array(
     '#type' => 'textfield',
     '#title' => t('E-mail address'),
@@ -444,5 +459,44 @@ function search_api_saved_searches_save_form_edit_validate(array $form, array &$
  * @see search_api_saved_searches_save_form_edit_validate()
  */
 function search_api_saved_searches_save_form_edit_submit(array $form, array &$form_state) {
-  // @todo Implement.
+  global $user;
+  $values = $form_state['values'];
+  $query = array_intersect_key($form_state['query'], drupal_map_assoc(array('index_id' , 'keys', 'fields', 'filters', 'options')));
+
+  $search = new SearchApiSavedSearch(array(
+    'uid' => $user->uid,
+    'settings_id' => $form_state['settings']->id,
+    'name' => $values['name'],
+    'mail' => $values['mail'],
+    'created' => REQUEST_TIME,
+    'last_execute' => REQUEST_TIME,
+    'interval' => $values['interval'],
+    'query' => $query,
+    'options' => array(),
+  ));
+  if (!$user->uid) {
+    $search->options['key'] = base64_encode(drupal_random_bytes(12));
+  }
+  $ret = $search->save();
+  if (!$ret) {
+    drupal_set_message(t('An error occurred while trying to save the search. Please contact the site administrator.'), 'error');
+  }
+  elseif ($ret == SAVED_NEW) {
+    drupal_set_message(t('Your saved search was successfully created.'));
+  }
+  else {
+    drupal_set_message(t('Your saved search was successfully updated.'));
+  }
+}
+
+/**
+ * Helper function for creating a name for a saved search with the given query.
+ */
+function _search_api_saved_searches_create_name(array $query) {
+  if (!empty($query['original_keys'])) {
+    $ret[] = $query['original_keys'];
+  }
+  // @todo File through filters, looking for things that could go in a name.
+
+  return isset($ret) ? implode(' / ', $ret) : t('Saved search');
 }
