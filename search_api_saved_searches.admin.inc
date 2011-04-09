@@ -24,15 +24,27 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
     );
     return $form;
   }
-  $settings = search_api_saved_searches_settings_load($index->machine_name);
+  $settings = search_api_saved_searches_settings_load_multiple(FALSE, array('index_id' => $index->machine_name));
   if (!$settings) {
+    $delta = $index->machine_name;
+    if (strlen($delta) > 32) {
+      $delta = $base = substr($delte, 0, 32);
+      for ($i = 1; search_api_saved_searches_settings_load($delta); ++$i) {
+        $suffix = '_' . $i;
+        $delta = substr($base, 0, 32 - strlen($suffix)) . $suffix;
+      }
+    }
     $settings = new SearchApiSavedSearchesSettings(array(
-      'delta' => $index->machine_name,
+      'delta' => $delta,
       'index_id' => $index->machine_name,
       'enabled' => FALSE,
       'options' => array(),
     ));
   }
+  else {
+    $settings = reset($settings);
+  }
+
   // Set default options.
   $settings->options += array(
     'default_true' => TRUE,
