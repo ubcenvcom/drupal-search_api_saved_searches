@@ -80,7 +80,24 @@ function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $
 }
 
 // @todo Implement hook_user_*() to automatically assign users all saved
-//   searches with their mail address after registration.
+//   searches with their mail address after registration (and free it again if
+//   the user is deleted).
+
+/**
+ * Implements hook_search_api_index_update().
+ *
+ * If the index got disabled, do the same with its search settings.
+ */
+function search_api_saved_searches_search_api_index_update(SearchApiIndex $index) {
+  if (!$index->enabled && $index->original->enabled) {
+    foreach (search_api_saved_searches_settings_load_multiple(FALSE, array('index_id' => $index->machine_name)) as $settings) {
+      if ($settings->enabled) {
+        $settings->enabled = FALSE;
+        $settings->save();
+      }
+    }
+  }
+}
 
 /**
  * Implements hook_search_api_index_delete().
@@ -236,4 +253,13 @@ function search_api_saved_search_edit_access($account, SearchApiSavedSearch $sea
     return FALSE;
   }
   return TRUE;
+}
+
+/**
+ * Implements _block_info().
+ */
+function search_api_saved_searches_block_info() {
+  foreach (search_api_saved_searches_settings_load_multiple(FALSE, array('enabled' => TRUE)) as $settings) {
+
+  }
 }

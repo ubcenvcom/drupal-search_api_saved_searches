@@ -16,6 +16,14 @@
  * @ingroup forms
  */
 function search_api_saved_searches_index_edit(array $form, array &$form_state, SearchApiIndex $index) {
+  if (!$index->enabled) {
+    $form = array(
+      'note' => array(
+        '#markup' => t('Saved searches cannot be enabled for a disabled search index. Enable the index first.'),
+      ),
+    );
+    return $form;
+  }
   $settings = search_api_saved_searches_settings_load($index->machine_name);
   if (!$settings) {
     $settings = new SearchApiSavedSearchesSettings(array(
@@ -51,7 +59,7 @@ You can configure your saved searches at the following address:
 
 --  [site:name] team'),
     'results' => "[search-api-saved-search:name]:\n[search-api-saved-search:items]\n" .
-        t('Delete this saved search: !url', array('!url' => '[search-api-saved-search:delete-url]')),
+        t('Edit this saved search: !url', array('!url' => '[search-api-saved-search:edit-url]')),
     'result' => NULL,
   );
   if (!isset($settings->options['mail']['result'])) {
