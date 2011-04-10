@@ -150,15 +150,6 @@ function search_api_saved_searches_search_api_saved_searches_settings_delete(Sea
 }
 
 /**
- * Implements hook_search_api_saved_search_insert().
- *
- * Save all current search results.
- */
-function search_api_saved_searches_search_api_saved_search_insert(SearchApiSavedSearch $search) {
-  // @todo Implement.
-}
-
-/**
  * Loads a single settings object.
  *
  * @param $id
@@ -382,8 +373,8 @@ function search_api_saved_searches_block_view($delta = '') {
  *   (optional) If creating a saved search for an already executed query, the
  *   query.
  *
- * @see search_api_saved_searches_save_form_edit_validate()
- * @see search_api_saved_searches_save_form_edit_submit()
+ * @see search_api_saved_searches_save_form_validate()
+ * @see search_api_saved_searches_save_form_submit()
  * @ingroup forms
  */
 function search_api_saved_searches_save_form(array $form, array &$form_state, SearchApiSavedSearchesSettings $settings, SearchApiQueryInterface $query = NULL) {
@@ -391,14 +382,13 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
 
   if (!isset($form_state['query']) && isset($query)) {
     $form_state['query'] = array(
-      'index_id' => $query->getIndex()->machine_name,
       'keys' => $query->getKeys(),
       'original_keys' => $query->getOriginalKeys(),
       'fields' => $query->getFields(),
       'filters' => $query->getFilter()->getFilters(),
       'options' => $query->getOptions(),
     );
-    $form_state['query']['options']['search id'] = $query->getIndex()->machine_name . ':' . 'saved-search';
+    $form_state['query']['options']['search id'] = $settings->delta . ':' . 'saved-search';
   }
   $form_state['settings'] = $settings;
 
@@ -444,9 +434,9 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
  * Form validation handler for search_api_saved_searches_save_form().
  *
  * @see search_api_saved_searches_save_form()
- * @see search_api_saved_searches_save_form_edit_submit()
+ * @see search_api_saved_searches_save_form_submit()
  */
-function search_api_saved_searches_save_form_edit_validate(array $form, array &$form_state) {
+function search_api_saved_searches_save_form_validate(array $form, array &$form_state) {
   if ($msg = user_validate_mail($form_state['values']['mail'])) {
     form_error($form['mail'], $msg);
   }
@@ -456,12 +446,12 @@ function search_api_saved_searches_save_form_edit_validate(array $form, array &$
  * Form validation handler for search_api_saved_searches_save_form().
  *
  * @see search_api_saved_searches_save_form()
- * @see search_api_saved_searches_save_form_edit_validate()
+ * @see search_api_saved_searches_save_form_validate()
  */
-function search_api_saved_searches_save_form_edit_submit(array $form, array &$form_state) {
+function search_api_saved_searches_save_form_submit(array $form, array &$form_state) {
   global $user;
   $values = $form_state['values'];
-  $query = array_intersect_key($form_state['query'], drupal_map_assoc(array('index_id' , 'keys', 'fields', 'filters', 'options')));
+  $query = array_intersect_key($form_state['query'], drupal_map_assoc(array('keys', 'fields', 'filters', 'options')));
 
   $search = new SearchApiSavedSearch(array(
     'uid' => $user->uid,

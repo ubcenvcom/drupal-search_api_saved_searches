@@ -68,7 +68,6 @@ class SearchApiSavedSearch extends Entity {
 
   /**
    * Array representing the search query to execute, containing:
-   *   index_id: The search index's machine name.
    *   keys: The parsed fulltext keys.
    *   fields: The fields that will be fulltext-searched.
    *   filters: An array of filters, as used in SearchApiQueryFilterInterface.
@@ -93,6 +92,23 @@ class SearchApiSavedSearch extends Entity {
    */
   public function __construct(array $values = array()) {
     parent::__construct($values, 'search_api_saved_search');
+  }
+
+  /**
+   * Permanently saves the entity.
+   *
+   * @see entity_save()
+   */
+  public function save() {
+    if (!isset($this->results)) {
+      $results = array();
+      $response = $this->query()->execute();
+      foreach ($response['results'] as $id => $result) {
+        $results[] = $id;
+      }
+      $this->results = implode(',', $results);
+    }
+    return parent::save();
   }
 
   /**
@@ -127,6 +143,28 @@ class SearchApiSavedSearch extends Entity {
       throw new SearchApiException(t("The index with the ID %id doesn't exist, but has saved search settings attached.", array('%id' => $this->settings()->index_id)));
     }
     return $this->index;
+  }
+
+  /**
+   * @return SearchApiQueryInterface
+   *   A query for getting all new results for this saved search.
+   *
+   * @throws SearchApiException
+   *   If the saved search's index is disabled.
+   */
+  public function query() {
+    $query = $this->index()->query($this->query['options']);
+    if ($this->query['keys']){
+      $query->keys($this->query['keys']);
+    }
+    if ($this->query['fields']){
+      $query->fields($this->query['fields']);
+    }
+    if ($this->query['filters']){
+      $filters = &$query->getFilter()->getFilters();
+      $filters = $this->query['filters'];
+    }
+    return $query;
   }
 
 }
