@@ -162,6 +162,9 @@ You can configure your saved searches at the following address:
     );
   }
 
+  // @todo Access options? Maximum number of saved searches per user, maximum
+  //   number of results to create saved search, minimum number of filters ?
+
   $form['options']['interval'] = array(
     '#type' => 'fieldset',
     '#title' => t('Notification interval'),
@@ -267,9 +270,6 @@ You can configure your saved searches at the following address:
     '#default_value' => $options['mail']['result'],
     '#rows' => 2,
   );
-
-  // @todo Access options? Maximum number of saved searches per user, maximum
-  //   number of results to create saved search, … ?
 
   // @todo Options for creating a creation form.
 
