@@ -408,7 +408,7 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
   );
 
   if ($settings->options['user_select_interval'] && count($settings->options['interval_options']) > 1) {
-    $form['interval'] = array(
+    $form['notify_interval'] = array(
       '#type' => 'select',
       '#title' => t('Notification interval'),
       '#options' => $settings->options['interval_options'],
@@ -416,7 +416,7 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
     );
   }
   else {
-    $form['interval'] = array(
+    $form['notify_interval'] = array(
       '#type' => 'value',
       '#value' => $settings->options['user_select_interval'] ? reset($settings->options['interval_options']) : $settings->options['set_interval'],
     );
@@ -460,7 +460,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     'mail' => $values['mail'],
     'created' => REQUEST_TIME,
     'last_execute' => REQUEST_TIME,
-    'interval' => $values['interval'],
+    'notify_interval' => $values['notify_interval'],
     'query' => $query,
     'options' => array(),
   ));

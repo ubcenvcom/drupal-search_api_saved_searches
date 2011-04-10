@@ -110,7 +110,7 @@ function search_api_saved_searches_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
-      'interval' => array(
+      'notify_interval' => array(
         'description' => 'The interval in which this saved search will be checked for new results, in seconds.',
         'type' => 'int',
         'not null' => FALSE,

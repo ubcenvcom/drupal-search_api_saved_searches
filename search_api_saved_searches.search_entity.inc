@@ -64,7 +64,7 @@ class SearchApiSavedSearch extends Entity {
   /**
    * @var integer
    */
-  public $interval;
+  public $notify_interval;
 
   /**
    * Array representing the search query to execute, containing:
