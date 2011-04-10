@@ -45,7 +45,20 @@ function search_api_saved_searches_schema() {
         'serialize' => TRUE,
         'not null' => TRUE,
       ),
-    ) + entity_exportable_schema_fields(),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => ENTITY_CUSTOM,
+        'size' => 'tiny',
+        'description' => 'The exportable status of the entity.',
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
     'indexes' => array(
       'index_id' => array('index_id'),
     ),
@@ -114,30 +127,17 @@ function search_api_saved_searches_schema() {
         'serialize' => TRUE,
         'not null' => TRUE,
       ),
+      'results' => array(
+        'description' => 'A comma-separated list of all "old" results for this saved search.',
+        'type' => 'text',
+        'not null' => FALSE,
+      ),
     ),
     'indexes' => array(
       'uid' => array('uid'),
       'mail' => array('mail'),
     ),
     'primary key' => array('id'),
-  );
-  $schema['search_api_saved_search_results'] = array(
-    'description' => 'The known results for a certain saved search.',
-    'fields' => array(
-      'search_id' => array(
-        'description' => 'The {search_api_saved_search}.id the result was for.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'result_id' => array(
-        'description' => 'The entity id of the returned result.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-    ),
-    'primary key' => array('search_id', 'result_id'),
   );
 
   return $schema;

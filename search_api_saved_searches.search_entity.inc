@@ -84,6 +84,11 @@ class SearchApiSavedSearch extends Entity {
   public $options;
 
   /**
+   * @var string
+   */
+  public $results;
+
+  /**
    * Constructor as a helper to the parent constructor.
    */
   public function __construct(array $values = array()) {

@@ -79,7 +79,7 @@ function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $
   return array('path' => 'admin/config/search/search_api/index/' . $settings->index_id . '/saved_searches');
 }
 
-// @todo Implement hook_user_*() to automatically assign users all saved
+// @todo Implement hook_user_*() to automatically assign new users all saved
 //   searches with their mail address after registration (and free it again if
 //   the user is deleted).
 
