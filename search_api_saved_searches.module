@@ -20,6 +20,17 @@ function search_api_saved_searches_menu() {
     'context' => MENU_CONTEXT_INLINE | MENU_CONTEXT_PAGE,
     'file' => 'search_api_saved_searches.admin.inc',
   );
+  $items['user/%user/saved-searches'] = array(
+    'title' => 'Saved searches',
+    'description' => 'View and edit your saved searches.',
+    'page callback' => 'search_api_saved_searches_user_listing',
+    'page arguments' => array(1),
+    'access callback' => 'search_api_saved_search_edit_access',
+    'access arguments' => array(1),
+    'weight' => 5,
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'search_api_saved_searches.pages.inc',
+  );
 
   return $items;
 }
@@ -281,6 +292,16 @@ function search_api_saved_search_edit_access($account, SearchApiSavedSearch $sea
   }
   if (isset($search) && $search->uid != $account->uid) {
     return FALSE;
+  }
+  if (!isset($search)) {
+    // We only let the user view the listing, if there are any saved searches.
+    // @todo Also allow access if saved searches can be created freely.
+    $select = db_select('search_api_saved_search', 's')
+      ->condition('uid', $account->uid);
+    $select->addExpression('COUNT(1)');
+    if (!$select->execute()->fetchField()) {
+      return FALSE;
+    }
   }
   return TRUE;
 }
