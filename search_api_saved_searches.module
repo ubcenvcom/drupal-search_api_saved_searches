@@ -483,7 +483,12 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     'last_execute' => REQUEST_TIME,
     'notify_interval' => $values['notify_interval'],
     'query' => $query,
-    'options' => array(),
+    'options' => array(
+      'page' => array(
+        'path' => $_GET['q'],
+        'query' => drupal_get_query_parameters(),
+      ),
+    ),
   ));
   if (!$user->uid) {
     $search->options['key'] = base64_encode(drupal_random_bytes(12));
@@ -494,11 +499,8 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     drupal_set_message(t('An error occurred while trying to save the search. Please contact the site administrator.'), 'error');
     $form_state['rebuild'] = TRUE;
   }
-  elseif ($ret == SAVED_NEW) {
-    drupal_set_message(t('Your saved search was successfully created.'));
-  }
   else {
-    drupal_set_message(t('Your saved search was successfully updated.'));
+    drupal_set_message(t('Your saved search was successfully created. You will receive e-mail notifications for new results in the future.'));
   }
 }
 
