@@ -403,6 +403,7 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
 
   if (!isset($form_state['query']) && isset($query)) {
     $form_state['query'] = array(
+      'index_id' => $query->getIndex()->machine_name,
       'keys' => $query->getKeys(),
       'original_keys' => $query->getOriginalKeys(),
       'fields' => $query->getFields(),
@@ -415,6 +416,8 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
 
   // @todo if (empty($form_state['query'])) -> provide advanced creation form.
 
+  $form['#prefix'] = '<div id="search-api-saved-searches-save-form-wrapper">';
+  $form['#suffix'] = '</div>';
   $form['name'] = array(
     '#type' => 'value',
     '#value' => _search_api_saved_searches_create_name($form_state['query']),
@@ -446,9 +449,23 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save search'),
+    '#ajax' => array(
+      'callback' => 'search_api_saved_searches_save_form_ajax',
+      'wrapper' => 'search-api-saved-searches-save-form-wrapper',
+      'effect' => 'fade',
+      'method' => 'replace',
+    ),
+    '#executes_submit_callback' => TRUE,
   );
 
   return $form;
+}
+
+/**
+ * AJAX submit handler for search_api_saved_searches_save_form().
+ */
+function search_api_saved_searches_save_form_ajax(array $form, array &$form_state) {
+  return form_get_errors() ? $form : array('#theme' => 'status_messages');
 }
 
 /**
@@ -466,10 +483,16 @@ function search_api_saved_searches_save_form_validate(array $form, array &$form_
 /**
  * Form validation handler for search_api_saved_searches_save_form().
  *
+ * @param $message
+ *   (optional) Whether to set a message reporting success or failure.
+ *
+ * @return boolean
+ *   TRUE iff the search was successfully saved.
+ *
  * @see search_api_saved_searches_save_form()
  * @see search_api_saved_searches_save_form_validate()
  */
-function search_api_saved_searches_save_form_submit(array $form, array &$form_state) {
+function search_api_saved_searches_save_form_submit(array $form, array &$form_state, $message = TRUE) {
   global $user;
   $values = $form_state['values'];
   $query = array_intersect_key($form_state['query'], drupal_map_assoc(array('keys', 'fields', 'filters', 'options')));
@@ -498,9 +521,11 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
   if (!$ret) {
     drupal_set_message(t('An error occurred while trying to save the search. Please contact the site administrator.'), 'error');
     $form_state['rebuild'] = TRUE;
+    return FALSE;
   }
   else {
     drupal_set_message(t('Your saved search was successfully created. You will receive e-mail notifications for new results in the future.'));
+    return TRUE;
   }
 }
 
