@@ -42,6 +42,11 @@ class SearchApiSavedSearch extends Entity {
   public $settings_id;
 
   /**
+   * @var boolean
+   */
+  public $enabled;
+
+  /**
    * @var string
    */
   public $name;
@@ -100,7 +105,7 @@ class SearchApiSavedSearch extends Entity {
    * @see entity_save()
    */
   public function save() {
-    if (!isset($this->results)) {
+    if ($this->enabled && !isset($this->results)) {
       $results = array();
       $response = $this->query()->execute();
       foreach ($response['results'] as $id => $result) {
@@ -108,7 +113,11 @@ class SearchApiSavedSearch extends Entity {
       }
       $this->results = implode(',', $results);
     }
-    return parent::save();
+    $ret = parent::save();
+    if ($ret == SAVED_NEW && !$this->enabled) {
+      // @todo Send activation mail.
+    }
+    return $ret;
   }
 
   /**

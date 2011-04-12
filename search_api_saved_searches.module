@@ -500,6 +500,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
   $search = new SearchApiSavedSearch(array(
     'uid' => $user->uid,
     'settings_id' => $form_state['settings']->id,
+    'enabled' => $user->mail == $values['mail'],
     'name' => $values['name'],
     'mail' => $values['mail'],
     'created' => REQUEST_TIME,
