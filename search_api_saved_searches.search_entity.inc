@@ -105,7 +105,7 @@ class SearchApiSavedSearch extends Entity {
    * @see entity_save()
    */
   public function save() {
-    if (!$user->uid && empty($this->options['key'])) {
+    if (!$search->enabled && empty($this->options['key'])) {
       $this->options['key'] = base64_encode(drupal_random_bytes(12));
     }
     if ($this->enabled && !isset($this->results)) {
@@ -118,7 +118,11 @@ class SearchApiSavedSearch extends Entity {
     }
     $ret = parent::save();
     if ($ret == SAVED_NEW && !$this->enabled) {
-      // @todo Send activation mail.
+      $params = array(
+        'user' => user_load($this->uid),
+        'search' => $this,
+      );
+      drupal_mail('search_api_saved_searches', 'activate', $this->mail, user_preferred_language($params['user']), $params);
     }
     return $ret;
   }
