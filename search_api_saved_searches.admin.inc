@@ -49,6 +49,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
   $settings->options += array(
     'default_true' => TRUE,
     'ids_list' => array(),
+    'registered_choose_mail' => FALSE,
     'user_select_interval' => TRUE,
     'interval_options' => array(
       60 * 60 * 24     => t('Daily'),
@@ -58,7 +59,22 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
     'mail' => array(),
   );
   $settings->options['mail'] += array(
-    'html' => FALSE,
+    'activate' => array(),
+    'notify' => array(),
+  );
+  $settings->options['mail']['activate'] += array(
+    'send' => TRUE,
+    'title' => t('Activate your saved search at [site:name]'),
+    'body' => t("A saved search on [site:name] with this e-mail address was created.
+To activate this saved search, click the following link:
+
+[search-api-saved-search:activate-url]
+
+If you didn't create this saved search, just ignore this mail and it will be deleted.
+
+--  [site:name] team"),
+  );
+  $settings->options['mail']['notify'] += array(
     'title' => t('New results for your saved search at [site:name]'),
     'body' => t('[user:name],
 
@@ -72,46 +88,8 @@ You can configure your saved searches at the following address:
 --  [site:name] team'),
     'results' => "[search-api-saved-search:name]:\n[search-api-saved-search:items]\n" .
         t('Edit this saved search: !url', array('!url' => '[search-api-saved-search:edit-url]')),
-    'result' => NULL,
+    'result' => '[search-api-saved-search-result:label] ([search-api-saved-search-result:url])',
   );
-  if (!isset($settings->options['mail']['result'])) {
-    // This is done extra, if necessary, as it requires some computing.
-    // And some guessing.
-    $tokens = token_info();
-    $type = $index->entity_type;
-    if (empty($tokens['types'][$type])) {
-      foreach ($tokens['types'] as $k => $v) {
-        if (isset($v['needs-data']) && $v['needs-data'] == $type) {
-          $type = $k;
-          break;
-        }
-      }
-    }
-    $entity_info = entity_get_info($type);
-    if (isset($entity_info['entity keys']['label']) && isset($tokens['tokens'][$type][$entity_info['entity keys']['label']])) {
-      $label = '[' . $type . ':' . $entity_info['entity keys']['label'] . ']';
-    }
-    elseif (isset($tokens['tokens'][$type][$entity_info['entity keys']['id']])) {
-      $label = '[' . $type . ':' . $entity_info['entity keys']['id'] . ']';
-    }
-    elseif (isset($tokens['tokens'][$type]['label'])) {
-      $label = "[$type:label]";
-    }
-    elseif (isset($tokens['tokens'][$type]['name'])) {
-      $label = "[$type:name]";
-    }
-    else {
-      $label = '';
-    }
-    if (isset($tokens['tokens'][$type]['url'])) {
-      $url = " ([$type:url])";
-    }
-    else {
-      $url = '';
-    }
-
-    $settings->options['mail']['result'] = "- $label$url";
-  }
   $form_state['settings'] = $settings;
   $options = $settings->options;
 
@@ -131,6 +109,13 @@ You can configure your saved searches at the following address:
       ),
     ),
   );
+
+  $form['options']['misc'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Miscellaneous'),
+    '#collapsible' => TRUE,
+    '#collapsed' => $settings->enabled,
+  );
   $search_ids = variable_get('search_api_saved_searches_search_ids', array());
   if (empty($search_ids[$index->machine_name]) || count($search_ids[$index->machine_name]) <= 1) {
     $form['options']['default_true'] = array(
@@ -143,7 +128,7 @@ You can configure your saved searches at the following address:
     );
   }
   else {
-    $form['options']['default_true'] = array(
+    $form['options']['misc']['default_true'] = array(
       '#type' => 'select',
       '#title' => t('Display for searches'),
       '#options' => array(
@@ -151,16 +136,24 @@ You can configure your saved searches at the following address:
         FALSE => t('Only for the selected'),
       ),
       '#default_value' => $options['default_true'],
+      '#parents' => array('options', 'default_true'),
     );
-    $form['options']['ids_list'] = array(
+    $form['options']['misc']['ids_list'] = array(
       '#type' => 'select',
       '#title' => t('Search IDs'),
       '#options' => $search_ids[$index->machine_name],
       '#size' => min(4, count($search_ids[$index->machine_name])),
       '#multiple' => TRUE,
       '#default_value' => $options['ids_list'],
+      '#parents' => array('options', 'ids_list'),
     );
   }
+  $form['options']['misc']['registered_choose_mail'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Let logged-in users also enter a different mail address'),
+    '#default_value' => $options['registered_choose_mail'],
+      '#parents' => array('options', 'registered_choose_mail'),
+  );
 
   // @todo Access options? Maximum number of saved searches per user, maximum
   //   number of results to create saved search, minimum number of filters ?
@@ -169,6 +162,7 @@ You can configure your saved searches at the following address:
     '#type' => 'fieldset',
     '#title' => t('Notification interval'),
     '#collapsible' => TRUE,
+    '#collapsed' => $settings->enabled,
   );
   $form['options']['interval']['user_select_interval'] = array(
     '#type' => 'checkbox',
@@ -223,53 +217,95 @@ You can configure your saved searches at the following address:
 
   $form['options']['mail'] = array(
     '#type' => 'fieldset',
-    '#title' => t('E-mail format'),
+    '#title' => t('E-mails'),
     '#collapsible' => TRUE,
+    '#collapsed' => $settings->enabled,
   );
-  $form['options']['mail']['html'] = array(
+  $form['options']['mail']['activate_send'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Send HTML mails'),
-    '#description' => t('Use full HTML for the mail body, instead of sending it in plain text.'),
-    '#default_value' => $options['mail']['html'],
+    '#title' => t('Use activation mail for anonymous users'),
+    '#description' => t("Will need saved searches created by anonymous users, or by normal users with an e-mail address that isn't their own, to be activated by clicking a link in an e-mail."),
+    '#default_value' => $options['mail']['activate']['send'],
+    '#parents' => array('options', 'mail', 'activate', 'send'),
   );
-  $form['options']['mail']['title'] = array(
+
+  $form['options']['mail']['activate'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Activation mail'),
+    '#collapsible' => TRUE,
+    '#collapsed' => $settings->enabled,
+  );
+  $form['options']['mail']['activate']['#states']['visible'][':input[name="options[mail][activate][send]"]']['checked'] = TRUE;
+  $form['options']['mail']['activate']['title'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject'),
-    '#description' => t("Enter the notification mail's subject.") . ' ' . t('Available variables are: @vars.',
-        array('@vars' => '[site:name], [user:name], [user:mail]')),
-    '#default_value' => $options['mail']['title'],
+    '#description' => t("Enter the mail's subject.") . ' ' . t('Available variables are: @vars.',
+        array('@vars' => '[site:name], [user:name], [user:mail], [search-api-saved-search:activate-url]')),
+    '#default_value' => $options['mail']['activate']['title'],
   );
-  $form['options']['mail']['body'] = array(
+  $form['options']['mail']['activate']['body'] = array(
     '#type' => 'textarea',
     '#title' => t('Body'),
-    '#description' => t("Enter the notification mail's body.") . ' ' . t('Available variables are: @vars.',
+    '#description' => t("Enter the mail's body.") . ' ' . t('Available variables are: @vars.',
         array('@vars' => '[site:name], [site:url], [user:name], [user:mail], [site:url-brief], ' .
             '[search-api-saved-searches:results], [user:search-api-saved-searches-url]')) . ' ' .
-        t('The replacement for [search-api-saved-searches:results] can be configured below.'),
-    '#default_value' => $options['mail']['body'],
+        t('The replacement for @var can be configured below.', array('@var' => '[search-api-saved-searches:results]')) . '<br />' .
+        t('Please note: For anonymous users, the [user:*] variables will be empty.'),
+    '#default_value' => $options['mail']['activate']['body'],
     '#rows' => 12,
   );
-  $form['options']['mail']['results'] = array(
+
+  $form['options']['mail']['notify'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Notification mails'),
+    '#collapsible' => TRUE,
+    '#collapsed' => $settings->enabled,
+  );
+  $form['options']['mail']['notify']['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#description' => t("Enter the mail's subject.") . ' ' . t('Available variables are: @vars.',
+        array('@vars' => '[site:name], [user:name], [user:mail]')),
+    '#default_value' => $options['mail']['notify']['title'],
+  );
+  $form['options']['mail']['notify']['body'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Body'),
+    '#description' => t("Enter the mail's body.") . ' ' . t('Available variables are: @vars.',
+        array('@vars' => '[site:name], [site:url], [user:name], [user:mail], [site:url-brief], ' .
+            '[search-api-saved-searches:results], [user:search-api-saved-searches-url]')) . ' ' .
+        t('The replacement for @var can be configured below.', array('@var' => '[search-api-saved-searches:results]')) . '<br />' .
+        t('Please note: For anonymous users, the [user:*] variables will be empty.'),
+    '#default_value' => $options['mail']['notify']['body'],
+    '#rows' => 12,
+  );
+  $form['options']['mail']['notify']['results'] = array(
     '#type' => 'textarea',
     '#title' => t('Results replacement'),
     '#description' => t('Enter the text that will replace the [search-api-saved-searches:results] variable above. If there are new results for several saved searches of a single user, this text will be inserted multiple times.') . ' ' .
         t('Available variables are: @vars.',
         array('@vars' => '[site:url], [search-api-saved-search:name], [search-api-saved-search:created], ' .
             '[search-api-saved-search:items], [search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')) . ' ' .
-        t('The replacement for [search-api-saved-search:items] can be configured below.'),
-    '#default_value' => $options['mail']['results'],
+        t('The replacement for @var can be configured below.', array('@var' => '[search-api-saved-search:items]')),
+    '#default_value' => $options['mail']['notify']['results'],
     '#rows' => 5,
   );
-  $form['options']['mail']['result'] = array(
+  $form['options']['mail']['notify']['result'] = array(
     '#type' => 'textarea',
     '#title' => t('Result item replacement'),
     '#description' => t('Enter the text that will replace the [search-api-saved-search:items] variable above. This text will be inserted on a new line once for every new result.') . ' ' .
         t('Available variables are: @vars.',
         array('@vars' => '[site:url], [search-api-saved-search-result:label], [search-api-saved-search-result:url], ' .
             '[search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')),
-    '#default_value' => $options['mail']['result'],
+    '#default_value' => $options['mail']['notify']['result'],
     '#rows' => 2,
   );
+  $tokens = token_info();
+  $type = $index->entity_type;
+  if (isset($tokens['types'][$type])) {
+    $form['options']['mail']['notify']['result']['#description'] .= ' ' . t('You can also use the @varstyle variables.',
+      array('@varstyle' => "[$type:*]"));
+  }
 
   // @todo Options for creating a creation form.
 
