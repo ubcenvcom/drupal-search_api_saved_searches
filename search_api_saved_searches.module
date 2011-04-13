@@ -422,14 +422,22 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
     '#type' => 'value',
     '#value' => _search_api_saved_searches_create_name($form_state['query']),
   );
-  $form['mail'] = array(
-    '#type' => 'textfield',
-    '#title' => t('E-mail address'),
-    '#maxlength' => 100,
-    '#size' => 16,
-    '#default_value' => $user->mail,
-    '#required' => TRUE,
-  );
+  if (!$user->mail || $settings->options['registered_choose_mail']) {
+    $form['mail'] = array(
+      '#type' => 'textfield',
+      '#title' => t('E-mail address'),
+      '#maxlength' => 100,
+      '#size' => 16,
+      '#default_value' => $user->mail,
+      '#required' => TRUE,
+    );
+  }
+  else {
+    $form['mail'] = array(
+      '#type' => 'value',
+      '#value' => $user->mail,
+    );
+  }
 
   if ($settings->options['user_select_interval'] && count($settings->options['interval_options']) > 1) {
     $form['notify_interval'] = array(
