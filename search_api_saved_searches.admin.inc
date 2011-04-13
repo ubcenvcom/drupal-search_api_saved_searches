@@ -246,6 +246,7 @@ You can configure your saved searches at the following address:
     '#description' => t("Enter the mail's subject.") . ' ' . t('Available variables are: @vars.',
         array('@vars' => '[site:name], [user:name], [user:mail], [search-api-saved-search:activate-url]')),
     '#default_value' => $options['mail']['activate']['title'],
+    '#required' => TRUE,
   );
   $form['options']['mail']['activate']['body'] = array(
     '#type' => 'textarea',
@@ -257,6 +258,7 @@ You can configure your saved searches at the following address:
         t('Please note: For anonymous users, the [user:*] variables will be empty.'),
     '#default_value' => $options['mail']['activate']['body'],
     '#rows' => 12,
+    '#required' => TRUE,
   );
 
   $form['options']['mail']['notify'] = array(
@@ -271,6 +273,7 @@ You can configure your saved searches at the following address:
     '#description' => t("Enter the mail's subject.") . ' ' . t('Available variables are: @vars.',
         array('@vars' => '[site:name], [user:name], [user:mail]')),
     '#default_value' => $options['mail']['notify']['title'],
+    '#required' => TRUE,
   );
   $form['options']['mail']['notify']['body'] = array(
     '#type' => 'textarea',
@@ -282,6 +285,7 @@ You can configure your saved searches at the following address:
         t('Please note: For anonymous users, the [user:*] variables will be empty.'),
     '#default_value' => $options['mail']['notify']['body'],
     '#rows' => 12,
+    '#required' => TRUE,
   );
   $form['options']['mail']['notify']['results'] = array(
     '#type' => 'textarea',
@@ -293,6 +297,7 @@ You can configure your saved searches at the following address:
         t('The replacement for @var can be configured below.', array('@var' => '[search-api-saved-search:items]')),
     '#default_value' => $options['mail']['notify']['results'],
     '#rows' => 5,
+    '#required' => TRUE,
   );
   $form['options']['mail']['notify']['result'] = array(
     '#type' => 'textarea',
@@ -303,6 +308,7 @@ You can configure your saved searches at the following address:
             '[search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')),
     '#default_value' => $options['mail']['notify']['result'],
     '#rows' => 2,
+    '#required' => TRUE,
   );
   $tokens = token_info();
   $type = $index->entity_type;
