@@ -514,9 +514,6 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
       ),
     ),
   ));
-  if (!$user->uid) {
-    $search->options['key'] = base64_encode(drupal_random_bytes(12));
-  }
   $ret = $search->save();
   $form_state['redirect'] = array($_GET['q'], array('query' => drupal_get_query_parameters()));
   if (!$ret) {
@@ -525,6 +522,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     return FALSE;
   }
   else {
+    // @todo $search->enable ? will receive notifications : will receive activation mail;
     drupal_set_message(t('Your saved search was successfully created. You will receive e-mail notifications for new results in the future.'));
     return TRUE;
   }
