@@ -422,13 +422,13 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
     '#type' => 'value',
     '#value' => _search_api_saved_searches_create_name($form_state['query']),
   );
-  if (!$user->mail || $settings->options['registered_choose_mail']) {
+  if (empty($user->mail) || $settings->options['registered_choose_mail']) {
     $form['mail'] = array(
       '#type' => 'textfield',
       '#title' => t('E-mail address'),
       '#maxlength' => 100,
       '#size' => 16,
-      '#default_value' => $user->mail,
+      '#default_value' => isset($user->mail) ? $user->mail : '',
       '#required' => TRUE,
     );
   }
@@ -508,7 +508,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
   $search = new SearchApiSavedSearch(array(
     'uid' => $user->uid,
     'settings_id' => $form_state['settings']->id,
-    'enabled' => $user->mail == $values['mail'],
+    'enabled' => $user->mail == $values['mail'] || user_access('administer search_api_saved_searches'),
     'name' => $values['name'],
     'mail' => $values['mail'],
     'created' => REQUEST_TIME,
@@ -522,6 +522,11 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
       ),
     ),
   ));
+  if (!$search->enabled && $user->uid) {
+    if (search_api_saved_search_load_multiple(FALSE, array('enabled' => TRUE, 'uid' => $user->uid, 'mail' => $search->mail))) {
+      $search->enabled = TRUE;
+    }
+  }
   $ret = $search->save();
   $form_state['redirect'] = array($_GET['q'], array('query' => drupal_get_query_parameters()));
   if (!$ret) {
@@ -530,8 +535,12 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     return FALSE;
   }
   else {
-    // @todo $search->enable ? will receive notifications : will receive activation mail;
-    drupal_set_message(t('Your saved search was successfully created. You will receive e-mail notifications for new results in the future.'));
+    if ($search->enabled) {
+      drupal_set_message(t('Your saved search was successfully created. You will receive e-mail notifications for new results in the future.'));
+    }
+    else {
+      drupal_set_message(t('Your saved search was successfully created. You will soon receive an e-mail with a confirmation link to activate it.'));
+    }
     return TRUE;
   }
 }
@@ -546,4 +555,31 @@ function _search_api_saved_searches_create_name(array $query) {
   // @todo File through filters, looking for things that could go in a name.
 
   return isset($ret) ? implode(' / ', $ret) : t('Saved search');
+}
+
+/**
+ * Implements hook_mail().
+ */
+function search_api_saved_searches_mail($key, array &$message, array $params) {
+  switch ($key) {
+    case 'activate':
+      $search = $params['search'];
+      $settings = $search->settings();
+      $data = array(
+        'user' => $params['user'],
+        'search_api_saved_search_info' => array(
+          'search' => $search,
+          'results' => array(),
+        ),
+      );
+      $title = $settings->options['mail']['activate']['title'];
+      $message['title'] = token_replace($title, $data, array('language' => $language, 'sanitize' => FALSE));
+      $body = $settings->options['mail']['activate']['body'];
+      $message['body'] = token_replace($body, $params, array('language' => $language, 'sanitize' => FALSE));
+      break;
+
+    case 'notify':
+
+      break;
+  }
 }
