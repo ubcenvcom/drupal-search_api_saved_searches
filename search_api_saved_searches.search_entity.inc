@@ -128,6 +128,14 @@ class SearchApiSavedSearch extends Entity {
   }
 
   /**
+   * @return
+   *   The user that owns this saved search.
+   */
+  public function user() {
+    return user_load($this->uid);
+  }
+
+  /**
    * @return SearchApiIndex
    *   The index this saved search uses.
    *
