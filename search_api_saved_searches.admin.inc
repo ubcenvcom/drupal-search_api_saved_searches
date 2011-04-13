@@ -152,7 +152,7 @@ You can configure your saved searches at the following address:
     '#type' => 'checkbox',
     '#title' => t('Let logged-in users also enter a different mail address'),
     '#default_value' => $options['registered_choose_mail'],
-      '#parents' => array('options', 'registered_choose_mail'),
+    '#parents' => array('options', 'registered_choose_mail'),
   );
 
   // @todo Access options? Maximum number of saved searches per user, maximum
@@ -168,6 +168,7 @@ You can configure your saved searches at the following address:
     '#type' => 'checkbox',
     '#title' => t('Let users select the interval'),
     '#default_value' => $options['user_select_interval'],
+    '#parents' => array('options', 'user_select_interval'),
   );
   $interval_options = array();
   foreach ($options['interval_options'] as $k => $v) {
@@ -179,9 +180,10 @@ You can configure your saved searches at the following address:
     '#title' => t('Interval options'),
     '#description' => t('The possible intervals the user can choose from. Enter one value per line, in the format seconds|label.'),
     '#default_value' => $interval_options,
+    '#parents' => array('options', 'interval_options'),
     '#states' => array(
       'visible' => array(
-        ':input[name="options[interval][user_select_interval]"]' => array('checked' => TRUE),
+        ':input[name="options[user_select_interval]"]' => array('checked' => TRUE),
       ),
     ),
   );
@@ -195,9 +197,10 @@ You can configure your saved searches at the following address:
     '#title' => t('Fixed notification interval'),
     '#options' => $interval_options,
     '#default_value' => isset($interval_options[$options['set_interval']]) ? $options['set_interval'] : 0,
+    '#parents' => array('options', 'set_interval'),
     '#states' => array(
       'visible' => array(
-        ':input[name="options[interval][user_select_interval]"]' => array('checked' => FALSE),
+        ':input[name="options[user_select_interval]"]' => array('checked' => FALSE),
       ),
     ),
   );
@@ -205,9 +208,10 @@ You can configure your saved searches at the following address:
     '#type' => 'textfield',
     '#description' => t('Enter the custom notification interval, in seconds.'),
     '#default_value' => isset($interval_options[$options['set_interval']]) ? $options['set_interval'] : 0,
+    '#parents' => array('options', 'set_interval_custom'),
     '#states' => array(
       'visible' => array(
-        ':input[name="options[interval][set_interval]"]' => array(
+        ':input[name="options[set_interval]"]' => array(
           'visible' => TRUE,
           'value' => '0',
         ),
@@ -325,8 +329,8 @@ You can configure your saved searches at the following address:
  */
 function search_api_saved_searches_index_edit_validate(array $form, array &$form_state) {
   $values = &$form_state['values'];
-  $interval_options = $values['options']['interval']['interval_options'];
-  $values['options']['interval']['interval_options'] = array();
+  $interval_options = $values['options']['interval_options'];
+  $values['options']['interval_options'] = array();
   foreach (explode("\n", $interval_options) as $line) {
     $parts = explode('|', $line, 2);
     if (count($parts) == 1) {
@@ -335,19 +339,19 @@ function search_api_saved_searches_index_edit_validate(array $form, array &$form
     else {
       list($k, $v) = array_map('trim', $parts);
     }
-    $values['options']['interval']['interval_options'][$k] = $v;
+    $values['options']['interval_options'][$k] = $v;
   }
-  if ($values['options']['interval']['user_select_interval']) {
-    foreach ($values['options']['interval']['interval_options'] as $k => $v) {
+  if ($values['options']['user_select_interval']) {
+    foreach ($values['options']['interval_options'] as $k => $v) {
       if (!preg_match('/^-?\d+$/', $k)) {
-        form_error($form['options']['interval']['interval_options'], t('"@input" is not a valid integer. Only integers can be used as intervals.', array('@input' => $k)));
+        form_error($form['options']['interval_options'], t('"@input" is not a valid integer. Only integers can be used as intervals.', array('@input' => $k)));
       }
     }
   }
-  elseif ($values['options']['interval']['set_interval'] == 0) {
-    $v = $values['options']['interval']['set_interval_custom'];
+  elseif ($values['options']['set_interval'] == 0) {
+    $v = $values['options']['set_interval_custom'];
     if (!preg_match('/^-?\d+$/', $v)) {
-      form_error($form['options']['interval']['set_interval_custom'], t('"@input" is not a valid integer. Only integers can be used as intervals.', array('@input' => $v)));
+      form_error($form['options']['set_interval_custom'], t('"@input" is not a valid integer. Only integers can be used as intervals.', array('@input' => $v)));
     }
   }
 }
@@ -363,8 +367,6 @@ function search_api_saved_searches_index_edit_submit(array $form, array &$form_s
   $settings = $form_state['settings'];
 
   $options = $values['options'];
-  $options += $options['interval'];
-  unset($options['interval']);
   if ($options['set_interval'] == 0) {
     $options['set_interval'] = $options['set_interval_custom'];
   }
