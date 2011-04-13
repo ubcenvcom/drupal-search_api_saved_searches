@@ -19,6 +19,19 @@
  * - [search-api-saved-search:delete-url]
  * - [search-api-saved-search-result:label]
  * - [search-api-saved-search-result:url]
+ *
+ * The used data types are the following:
+ * - search_api_saved_searches: An array with values of type
+ *   search_api_saved_search_info.
+ * - search_api_saved_search_info: An associative array containing:
+ *   - search: A SearchApiSavedSearch entity object.
+ *   - results: An array of entities of the type that the index associated with
+ *     the saved search contains.
+ * - search_api_saved_search_result_info: An associative array containing:
+ *   - search: A SearchApiSavedSearch entity object.
+ *   - entity: An entity of the type corresponding to the saved search.
+ *
+ * @see search_api_saved_searches_tokens()
  */
 function search_api_saved_searches_token_info() {
   $info['types']['search-api-saved-searches'] = array(
@@ -82,4 +95,131 @@ function search_api_saved_searches_token_info() {
   );
 
   return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ *
+ * @see search_api_saved_searches_token_info()
+ */
+function search_api_saved_searches_tokens($type, array $tokens, array $data = array(), array $options = array()) {
+  $url_options = array('absolute' => TRUE);
+  if (isset($options['language'])) {
+    $url_options['language'] = $options['language'];
+    $language_code = $options['language']->language;
+  }
+  else {
+    $language_code = NULL;
+  }
+  $sanitize = !empty($options['sanitize']);
+
+  $replacements = array();
+
+  switch ($type) {
+    case 'user':
+      if (!empty($data['user']->uid)) {
+        if (isset($tokens['search-api-saved-searches-url'])) {
+          $replacements[$tokens['search-api-saved-searches-url']] = url('user/' . $data['user']->uid . '/saved-searches', $url_options);
+        }
+      }
+      break;
+
+    case 'search-api-saved-searches':
+      if (!empty($data['search_api_saved_searches'])) {
+        if (isset($tokens['results'])) {
+          $results = array();
+          foreach ($data['search_api_saved_searches'] as $info) {
+            $search = $info['search'];
+            $settings = $search->settings();
+            if (empty($settings->options['mail']['notify']['results'])) {
+              continue;
+            }
+            $text = $settings->options['mail']['notify']['results'];
+            $params['user'] = $search->user();
+            $params['search_api_saved_search_info'] = $info;
+            $results[] = token_replace($text, $params, $options);
+          }
+          $text = implode("\n\n", $results);
+          $replacements[$tokens['results']] = $sanitize ? check_plain($text) : $text;
+        }
+      }
+      break;
+
+    case 'search-api-saved-search':
+      if (!empty($data['search_api_saved_search_info']['search'])) {
+        $search = $data['search_api_saved_search_info']['search'];
+        foreach ($tokens as $name => $original) {
+          switch ($name) {
+            case 'name':
+              $replacements[$original] = $sanitize ? check_plain($search->name) : $search->name;
+              break;
+            case 'created':
+              $replacements[$original] = format_date($search->created, 'medium', '', NULL, $language_code);
+              break;
+            case 'items':
+              if (!empty($data['search_api_saved_search_info']['results'])) {
+                $results = array();
+                $settings = $search->settings();
+                if (empty($settings->options['mail']['notify']['result'])) {
+                  break;
+                }
+                $entity_type = $search->index()->entity_type;
+                $text = $settings->options['mail']['notify']['result'];
+                foreach ($data['search_api_saved_search_info']['results'] as $entity) {
+                  $params = array(
+                    $entity_type => $entity,
+                    'search_api_saved_search_result_info' => array(
+                      'search' => $search,
+                      'entity' => $entity,
+                    ),
+                  );
+                  $results[] = token_replace($text, $params, $options);
+                }
+                $text = implode("\n", $results);
+                $replacements[$original] = $sanitize ? check_plain($text) : $text;
+              }
+              break;
+            case 'activate-url':
+              $replacements[$original] = url('search-api/saved-search/' . $search->id . '/activate', $url_options);
+              break;
+            case 'edit-url':
+              $replacements[$original] = url('search-api/saved-search/' . $search->id . '/edit', $url_options);
+              break;
+            case 'delete-url':
+              $replacements[$original] = url('search-api/saved-search/' . $search->id . '/delete', $url_options);
+              break;
+          }
+        }
+        if ($created_tokens = token_find_with_prefix($tokens, 'created')) {
+          $replacements += token_generate('date', $created_tokens, array('date' => $search->created), $options);
+        }
+      }
+      break;
+
+    case 'search-api-saved-search-result':
+      $d = $data['search_api_saved_search_result_info'];
+      if (!empty($d['search']) && !empty($d['entity'])) {
+        $search = $d['search'];
+        $entity = $d['entity'];
+        $entity_type = $search->index()->entity_type;
+        foreach ($tokens as $name => $original) {
+          if ($name == 'label' && ($label == entity_label($entity_type, $entity))) {
+            $replacements[$original] = $label;
+          }
+          elseif ($name == 'url' && ($url == entity_uri($entity_type, $entity))) {
+            if ($entity_type == 'file') {
+              $url = array(
+                'path' => file_create_url($url),
+                'options' => array(),
+              );
+            }
+            $url['options'] += $url_options;
+            $replacements[$original] = url($url['path'], $url['options']);
+          }
+        }
+      }
+      break;
+  }
+
+  return $replacements;
 }
