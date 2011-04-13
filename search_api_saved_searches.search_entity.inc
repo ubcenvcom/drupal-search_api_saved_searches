@@ -11,6 +11,13 @@
 class SearchApiSavedSearch extends Entity {
 
   /**
+   * The user that owns this saved search.
+   *
+   * @var stdClass
+   */
+  protected $user;
+
+  /**
    * The settings this saved search uses.
    *
    * @var SearchApiSavedSearchesSettings
@@ -132,7 +139,10 @@ class SearchApiSavedSearch extends Entity {
    *   The user that owns this saved search.
    */
   public function user() {
-    return user_load($this->uid);
+    if (!isset($this->user)) {
+      $this->user = user_load($this->uid);
+    }
+    return $this->user;
   }
 
   /**
