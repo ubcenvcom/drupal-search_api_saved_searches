@@ -480,6 +480,11 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
     );
   }
 
+  $form_state['page'] = array(
+    'path' => $_GET['q'],
+    'query' => drupal_get_query_parameters(),
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save search'),
@@ -542,10 +547,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     'notify_interval' => $values['notify_interval'],
     'query' => $query,
     'options' => array(
-      'page' => array(
-        'path' => $_GET['q'],
-        'query' => drupal_get_query_parameters(),
-      ),
+      'page' => $form_state['page'],
     ),
   ));
   if (!$search->enabled && $user->uid) {
@@ -554,7 +556,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     }
   }
   $ret = $search->save();
-  $form_state['redirect'] = array($_GET['q'], array('query' => drupal_get_query_parameters()));
+  $form_state['redirect'] = array($form_state['page']['path'], $form_state['page']);
   if (!$ret) {
     drupal_set_message(t('An error occurred while trying to save the search. Please contact the site administrator.'), 'error');
     $form_state['rebuild'] = TRUE;
