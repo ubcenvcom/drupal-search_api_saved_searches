@@ -31,7 +31,25 @@ function search_api_saved_searches_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'search_api_saved_searches.pages.inc',
   );
-  // Add search-api/saved-search/%/activate|edit|delete and adapt access function
+  $items['search-api/saved-search/%search_api_saved_search/activate/%'] = array(
+    'title' => 'Activate saved search',
+    'description' => 'Activate a new saved search.',
+    'page callback' => 'search_api_saved_searches_activate_page',
+    'page arguments' => array(2, 4),
+    'access callback' => 'search_api_saved_search_edit_access',
+    'access arguments' => array(NULL, 2, 4),
+    'file' => 'search_api_saved_searches.pages.inc',
+  );
+  // @todo Edit?
+  $items['search-api/saved-search/%search_api_saved_search/delete'] = array(
+    'title' => 'Activate saved search',
+    'description' => 'Activate a new saved search.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('search_api_saved_searches_search_delete_form', 2),
+    'access callback' => 'search_api_saved_search_edit_access',
+    'access arguments' => array(NULL, 2, 4),
+    'file' => 'search_api_saved_searches.pages.inc',
+  );
 
   return $items;
 }
@@ -265,7 +283,7 @@ function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $s
  * accessing and editing the searches.
  *
  * @param $account
- *   The user whose saved search(es) would be edited.
+ *   (optional) The user whose saved search(es) would be edited. NULL for guest.
  * @param SearchApiSavedSearch $search
  *   (optional) The saved search involved, if there is just a single one.
  * @param string $key
@@ -276,6 +294,13 @@ function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $s
  */
 function search_api_saved_search_edit_access($account, SearchApiSavedSearch $search = NULL, $key = NULL) {
   global $user;
+
+  if (!isset($account)) {
+    if (!isset($search)) {
+      return FALSE;
+    }
+    $account = (object) array('uid' => $search->uid);
+  }
 
   if (user_access('administer search_api_saved_searches')) {
     return TRUE;
@@ -295,7 +320,7 @@ function search_api_saved_search_edit_access($account, SearchApiSavedSearch $sea
     return FALSE;
   }
   if (!isset($search)) {
-    // We only let the user view the listing, if there are any saved searches.
+    // We only let the user view the listing if there are any saved searches.
     // @todo Also allow access if saved searches can be created freely.
     $select = db_select('search_api_saved_search', 's')
       ->condition('uid', $account->uid);
