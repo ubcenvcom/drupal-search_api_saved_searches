@@ -202,11 +202,20 @@ class SearchApiSavedSearch extends Entity {
   }
 
   /**
-   * Return the URL at which this search can be viewed, if any.
+   * Return the URL where this search can be viewed, if any.
    */
   public function url() {
     if (isset($this->options['page']['path'])) {
       return url($this->options['page']['path'], $this->options['page']);
+    }
+  }
+
+  /**
+   * Return a link to the URL where this search can be viewed, if any.
+   */
+  public function l($text) {
+    if (isset($this->options['page']['path'])) {
+      return l($text, $this->options['page']['path'], $this->options['page']);
     }
   }
 
