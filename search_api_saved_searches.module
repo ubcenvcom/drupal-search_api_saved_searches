@@ -602,6 +602,7 @@ function _search_api_saved_searches_create_name(array $query) {
  *       saved search.
  */
 function search_api_saved_searches_mail($key, array &$message, array $params) {
+  $language = $message['language'];
   switch ($key) {
     case 'activate':
       $search = $params['search'];
@@ -716,7 +717,7 @@ function search_api_saved_searches_check_updates(array $searches) {
         // Let other modules alter these results.
         drupal_alter('search_api_saved_searches_new_results', $new_results, $search);
         if ($new_results) {
-          $mail_params['searches'] = array(
+          $mail_params['searches'][] = array(
             'search' => $search,
             'results' => $new_results,
           );
