@@ -587,6 +587,19 @@ function _search_api_saved_searches_create_name(array $query) {
 
 /**
  * Implements hook_mail().
+ *
+ * Two mails are provided, which expect the following values in the $params
+ * array:
+ * - activate:
+ *   - search: The SearchApiSavedSearch object that should be activated.
+ *   - user: The user object to which the saved search belongs.
+ * -notify:
+ *   - user: The user to which the executed searches belong.
+ *   - settings: The settings with which the searches are associated.
+ *   - searches: An array containing arrays with the following keys:
+ *     - search: A SearchApiSavedSearch object that was checked.
+ *     - results: An array of entities representing the new results for that
+ *       saved search.
  */
 function search_api_saved_searches_mail($key, array &$message, array $params) {
   switch ($key) {
@@ -603,7 +616,7 @@ function search_api_saved_searches_mail($key, array &$message, array $params) {
       $title = $settings->options['mail']['activate']['title'];
       $message['subject'] .= token_replace($title, $data, array('language' => $language, 'sanitize' => FALSE));
       $body = $settings->options['mail']['activate']['body'];
-      $message['body'][] = token_replace($body, $params, array('language' => $language, 'sanitize' => FALSE));
+      $message['body'][] = token_replace($body, $data, array('language' => $language, 'sanitize' => FALSE));
       break;
 
     case 'notify':
@@ -615,7 +628,116 @@ function search_api_saved_searches_mail($key, array &$message, array $params) {
       $title = $settings->options['mail']['notify']['title'];
       $message['subject'] .= token_replace($title, $data, array('language' => $language, 'sanitize' => FALSE));
       $body = $settings->options['mail']['notify']['body'];
-      $message['body'][] = token_replace($body, $params, array('language' => $language, 'sanitize' => FALSE));
+      $message['body'][] = token_replace($body, $data, array('language' => $language, 'sanitize' => FALSE));
       break;
+  }
+}
+
+/**
+ * Implements hook_cron().
+ *
+ * Queue the saved searches that should be checked for new items.
+ */
+function search_api_saved_searches_cron() {
+  // Get all searches whose last execution lies more than the notify_interval
+  // in the past. Add a small amount to the current time, so small differences
+  // in execution time don't result in a delay until the next cron run.
+  $ids = db_select('search_api_saved_search', 's')
+    ->fields('s', array('id'))
+    ->condition('enabled', 1)
+    ->where('last_execute + notify_interval < :time', array(':time' => REQUEST_TIME + 15))
+    ->execute()
+    ->fetchCol();
+  if (!$ids) {
+    return;
+  }
+  // Set the last execution timestamp now, so the interval doesn't move and we
+  // don't get problems if the next cron run occurrs before the queue is
+  // completely executed.
+  db_update('search_api_saved_search')
+    ->fields(array(
+      'last_execute' => REQUEST_TIME,
+    ))
+    ->condition('id', $ids, 'IN')
+    ->execute();
+  // Get the queue and load the queries.
+  $queue = DrupalQueue::get('search_api_saved_searches_check_updates');
+  $searches = search_api_saved_search_load_multiple($ids);
+  // Group the search according to mail and settings. Grouping by mail prevents
+  // a user from getting several mails at once, for different searches. Grouping
+  // by settings is necessary since the mails can differ between settings.
+  foreach ($searches as $search) {
+    $user_searches[$search->mail . ' ' . $search->settings_id][] = $search;
+  }
+  foreach ($user_searches as $searches) {
+    $queue->createItem($searches);
+  }
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ *
+ * Defines a queue for saved searches that should be checked for new items.
+ */
+function search_api_saved_searches_cron_queue_info() {
+  return array(
+    'search_api_saved_searches_check_updates' => array(
+      'worker callback' => 'search_api_saved_searches_check_updates',
+      'time' => 10,
+    ),
+  );
+}
+
+/**
+ * Checks for new results for saved searches, and sends a mail if necessary.
+ *
+ * @param array $searches
+ *   An array of SearchApiSavedSearch objects to check for new results. All of
+ *   these should have the same mail address and base settings.
+ */
+function search_api_saved_searches_check_updates(array $searches) {
+  $search = reset($searches);
+  $settings = $search->settings();
+  $index = $settings->index();
+  $entity_type = $index->entity_type;
+  $mail_params = array();
+  foreach ($searches as $search) {
+    $old = explode(',', $search->results);
+    // Get actual results for the query.
+    $query = $search->query();
+    $response = $query->execute();
+    if (!empty($response['results'])) {
+      $results = array_keys($response['results']);
+      // Compare these results to the old ones.
+      $new = array_diff($results, $old);
+      if ($new) {
+        // We have new results: send them to the user.
+        $new_results = entity_load($entity_type, $new);
+        // Let other modules alter these results.
+        drupal_alter('search_api_saved_searches_new_results', $new_results, $search);
+        if ($new_results) {
+          $mail_params['searches'] = array(
+            'search' => $search,
+            'results' => $new_results,
+          );
+        }
+      }
+      if ($new || array_diff($old, $results)) {
+        // The results changed in some way: store the latest version.
+        $search->results = implode(',', $results);
+        $search->save();
+      }
+    }
+  }
+  // If we set any searches in the mail parameters, send the mail.
+  if ($mail_params) {
+    $mail_params['user'] = user_load($search->uid);
+    $mail_params['settings'] = $settings;
+    $message = drupal_mail('search_api_saved_searches', 'notify', $search->mail,
+        user_preferred_language($mail_params['user']), $mail_params);
+    if ($message['result']) {
+      watchdog('search_api_saved_searches', 'A mail with new saved search results was sent to !mail.',
+          array('!mail' => $search->mail), WATCHDOG_INFO);
+    }
   }
 }
