@@ -18,7 +18,7 @@ function search_api_saved_searches_user_listing($account) {
     t('Created'),
     t('Last executed'),
     t('Interval'),
-    array('data' => t('Operations'), 'colspan' => 2),
+    t('Operations'),
   );
   $searches = search_api_saved_search_load_multiple(FALSE, array('uid' => $account->uid));
   $rows = array();
@@ -38,7 +38,6 @@ function search_api_saved_searches_user_listing($account) {
       $created,
       $last_execute,
       $interval,
-      l(t('edit'), $path),
       l(t('delete'), $path . '/delete'),
     );
   }

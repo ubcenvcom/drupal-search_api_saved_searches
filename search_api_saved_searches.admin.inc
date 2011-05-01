@@ -86,8 +86,8 @@ You can configure your saved searches at the following address:
 [user:search-api-saved-searches-url]
 
 --  [site:name] team'),
-    'results' => "[search-api-saved-search:name]:\n[search-api-saved-search:items]\n" .
-        t('Edit this saved search: !url', array('!url' => '[search-api-saved-search:edit-url]')),
+    'results' => t('New results for search "!name_token"', array('!name_token' => '[search-api-saved-search:name]')) .
+        ":\n[search-api-saved-search:items]",
     'result' => '[search-api-saved-search-result:label] ([search-api-saved-search-result:url])',
   );
   $form_state['settings'] = $settings;
@@ -295,7 +295,7 @@ You can configure your saved searches at the following address:
         t('Available variables are: @vars.',
         array('@vars' => '[site:url], [search-api-saved-search:name], [search-api-saved-search:created], ' .
             '[search-api-saved-search:items], [search-api-saved-search:view-url], ' .
-            '[search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')) . ' ' .
+            '[search-api-saved-search:delete-url]')) . ' ' .
         t('The replacement for @var can be configured below.', array('@var' => '[search-api-saved-search:items]')),
     '#default_value' => $options['mail']['notify']['results'],
     '#rows' => 5,
@@ -307,7 +307,7 @@ You can configure your saved searches at the following address:
     '#description' => t('Enter the text that will replace the [search-api-saved-search:items] variable above. This text will be inserted on a new line once for every new result.') . ' ' .
         t('Available variables are: @vars.',
         array('@vars' => '[site:url], [search-api-saved-search-result:label], [search-api-saved-search-result:url], ' .
-            '[search-api-saved-search:view-url], [search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')),
+            '[search-api-saved-search:view-url], [search-api-saved-search:delete-url]')),
     '#default_value' => $options['mail']['notify']['result'],
     '#rows' => 2,
     '#required' => TRUE,

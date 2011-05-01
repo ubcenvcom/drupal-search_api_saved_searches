@@ -40,7 +40,6 @@ function search_api_saved_searches_menu() {
     'access arguments' => array(NULL, 2, 4),
     'file' => 'search_api_saved_searches.pages.inc',
   );
-  // @todo Edit?
   $items['search-api/saved-search/%search_api_saved_search/delete'] = array(
     'title' => 'Activate saved search',
     'description' => 'Activate a new saved search.',

@@ -16,7 +16,6 @@
  * - [search-api-saved-search:items]
  * - [search-api-saved-search:view-url]
  * - [search-api-saved-search:activate-url]
- * - [search-api-saved-search:edit-url]
  * - [search-api-saved-search:delete-url]
  * - [search-api-saved-search-result:label]
  * - [search-api-saved-search-result:url]
@@ -81,10 +80,6 @@ function search_api_saved_searches_token_info() {
   $search['activate-url'] = array(
     'name' => t('Activate URL'),
     'description' => t('The URL for activating the saved search, if necessary.'),
-  );
-  $search['edit-url'] = array(
-    'name' => t('Edit URL'),
-    'description' => t('The URL for editing the saved search.'),
   );
   $search['delete-url'] = array(
     'name' => t('Delete URL'),
@@ -189,9 +184,6 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
               break;
             case 'activate-url':
               $replacements[$original] = url('search-api/saved-search/' . $search->id . '/activate', $url_options);
-              break;
-            case 'edit-url':
-              $replacements[$original] = url('search-api/saved-search/' . $search->id . '/edit', $url_options);
               break;
             case 'delete-url':
               $replacements[$original] = url('search-api/saved-search/' . $search->id . '/delete', $url_options);
