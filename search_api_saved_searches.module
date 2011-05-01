@@ -427,15 +427,19 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
   global $user;
 
   if (!isset($form_state['query']) && isset($query)) {
+    $options = $query->getOptions();
+    // When checking for new results, we need all results.
+    // @todo Make this configurable?
+    unset($options['offset'], $options['limit']);
+    $options['search id'] = $settings->delta . ':' . 'saved-search';
     $form_state['query'] = array(
       'index_id' => $query->getIndex()->machine_name,
       'keys' => $query->getKeys(),
       'original_keys' => $query->getOriginalKeys(),
       'fields' => $query->getFields(),
       'filters' => $query->getFilter()->getFilters(),
-      'options' => $query->getOptions(),
+      'options' => $options,
     );
-    $form_state['query']['options']['search id'] = $settings->delta . ':' . 'saved-search';
   }
   $form_state['settings'] = $settings;
 
