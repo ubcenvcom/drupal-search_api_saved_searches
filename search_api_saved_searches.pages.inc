@@ -85,7 +85,7 @@ function search_api_saved_searches_activate_page(SearchApiSavedSearch $search, $
     $msg = t('Your saved search was successfully activated.');
   }
   $msg .= ' ' . t('You will receive e-mail notifications for all new results.');
-  $ret['message']['#markup'] = '<p>' . $message . '</p>';
+  $ret['message']['#markup'] = '<p>' . $msg . '</p>';
   return $ret;
 }
 
