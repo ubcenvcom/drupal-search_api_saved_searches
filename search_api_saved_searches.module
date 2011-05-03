@@ -36,6 +36,7 @@ function search_api_saved_searches_menu() {
     'description' => 'Create a new saved search.',
     'page callback' => 'search_api_saved_searches_create_manual',
     'access callback' => 'search_api_saved_search_create_access',
+    'access arguments' => array(NULL, TRUE),
     'type' => MENU_LOCAL_ACTION,
     'file' => 'search_api_saved_searches.pages.inc',
   );
@@ -582,6 +583,7 @@ function _search_api_saved_searches_create_search_form(SearchApiSavedSearchesSet
   $wrapper = $index->entityWrapper();
   $options = isset($settings->options['manual']) ? $settings->options['manual'] : array();
 
+  $form['#tree'] = TRUE;
   $form['fields'] = array(
     '#type' => 'fieldset',
     '#title' => t('Search'),
@@ -603,12 +605,12 @@ function _search_api_saved_searches_create_search_form(SearchApiSavedSearchesSet
           }
           $tmp = $tmp->$part;
         }
-        $label = $tmp->label();
-        $form['fields'][$field]['#title'] = $label ? $label : $field;
+        $info = $tmp->info();
+        $form['fields'][$field]['#title'] = isset($info['label']) ? $info['label'] : $field;
         if ($optList = $tmp->optionsList('view')) {
+          $optList = array(NULL => t('- Any -')) + $optList;
           $form['fields'][$field]['#type'] = 'select';
           $form['fields'][$field]['#options'] = $optList;
-          $form['fields'][$field]['#size'] = min(4, count($optList));
         }
         else {
           $form['fields'][$field]['#type'] = 'textfield';
@@ -669,7 +671,12 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     );
     unset($fields['search_api_saved_searches_fulltext']);
     foreach ($fields as $field => $value) {
-      $query['filters'][] = array($field, $value, '=');
+      if ($value || is_numeric($value)) {
+        $query['filters'][] = array($field, $value, '=');
+      }
+      else {
+        unset($fields[$field]);
+      }
     }
 
     if (empty($values['name'])) {
@@ -678,10 +685,10 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
       unset($query['original_keys']);
     }
 
-    if (!empty($settings->options['manual']['page']['path'])){
+    if (empty($form_state['page']) && !empty($settings->options['manual']['page']['path'])) {
       $page_options = $settings->options['manual']['page'];
       $form_state['page'] = array(
-        'path' => $settings->options['manual']['page']['path'],
+        'path' => $page_options['path'],
         'query' => array(),
       );
       if (isset($query['keys'])) {
@@ -694,7 +701,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
       }
       foreach ($fields as $field => $value) {
         if (empty($page_options['direct_filter_params'])) {
-          $form_state['page']['query']['filter'][$field][] = $value;
+          $form_state['page']['query']['filter'][$field][] = '"' . $value . '"';
         }
         else {
           $form_state['page']['query'][$field] = $value;
@@ -721,7 +728,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     ),
   ));
   if (!empty($form_state['page'])) {
-    $search['options']['page'] = $form_state['page'];
+    $search->options['page'] = $form_state['page'];
     $form_state['redirect'] = array($form_state['page']['path'], $form_state['page']);
   }
   elseif ($user->uid) {
