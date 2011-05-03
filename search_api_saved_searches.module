@@ -31,6 +31,31 @@ function search_api_saved_searches_menu() {
     'type' => MENU_LOCAL_TASK,
     'file' => 'search_api_saved_searches.pages.inc',
   );
+  $items['user/%user/saved-searches/add'] = array(
+    'title' => 'Create saved search',
+    'description' => 'Create a new saved search.',
+    'page callback' => 'search_api_saved_searches_create_manual',
+    'access callback' => 'search_api_saved_search_create_access',
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'search_api_saved_searches.pages.inc',
+  );
+  $items['search-api/saved-searches/add'] = array(
+    'title' => 'Create saved search',
+    'description' => 'Create a new saved search.',
+    'page callback' => 'search_api_saved_searches_create_manual',
+    'access callback' => 'search_api_saved_search_create_access',
+    'access arguments' => array(NULL, TRUE),
+    'file' => 'search_api_saved_searches.pages.inc',
+  );
+  $items['search-api/saved-searches/add/%search_api_saved_searches_settings'] = array(
+    'title' => 'Create saved search',
+    'description' => 'Create a new saved search.',
+    'page callback' => 'search_api_saved_searches_create_manual',
+    'page arguments' => array(3),
+    'access callback' => 'search_api_saved_search_create_access',
+    'access arguments' => array(3, TRUE),
+    'file' => 'search_api_saved_searches.pages.inc',
+  );
   $items['search-api/saved-search/%search_api_saved_search/activate/%'] = array(
     'title' => 'Activate saved search',
     'description' => 'Activate a new saved search.',
@@ -252,13 +277,34 @@ function search_api_saved_search_load_multiple($ids = FALSE, array $conditions =
  * Determine whether the current user can create a saved search for specific settings.
  *
  * @param SearchApiSavedSearchesSettings $settings
- *   The settings to check for.
+ *   The settings to check for. May be NULL, if $manual is TRUE, to check if any
+ *   saved searches can be created manually.
+ * @param boolean $manual
+ *   (optional) If TRUE, check access for creating a saved search manually.
  *
  * @return boolean
  *   TRUE iff the current user is allowed to create a new saved search.
  */
-function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $settings) {
-  if (!$settings->enabled) {
+function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $settings = NULL, $manual = FALSE) {
+  if ($manual) {
+    if (isset($settings)) {
+      if (!$settings->enabled || empty($settings->options['manual']['allow'])) {
+        return FALSE;
+      }
+    }
+    else {
+      foreach (search_api_saved_searches_settings_load_multiple() as $settings) {
+        if (!empty($settings->options['manual']['allow'])) {
+          $found = TRUE;
+          break;
+        }
+      }
+      if (empty($found)) {
+        return FALSE;
+      }
+    }
+  }
+  elseif (!$settings->enabled) {
     return FALSE;
   }
 
@@ -267,6 +313,9 @@ function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $s
   }
   if (!user_access('use search_api_saved_searches')) {
     return FALSE;
+  }
+  if (!isset($settings)) {
+    return TRUE;
   }
 
   // @todo Check settings-specific access rules, when there are any.
@@ -321,8 +370,13 @@ function search_api_saved_search_edit_access($account = NULL, SearchApiSavedSear
     return FALSE;
   }
   if (!isset($search)) {
+    // Allow access if users can manually create searches.
+    foreach (search_api_saved_searches_settings_load_multiple() as $settings) {
+      if (!empty($settings->options['manual']['allow'])) {
+        return TRUE;
+      }
+    }
     // We only let the user view the listing if there are any saved searches.
-    // @todo Also allow access if saved searches can be created manually.
     $select = db_select('search_api_saved_search', 's')
       ->condition('uid', $account->uid);
     $select->addExpression('COUNT(1)');
