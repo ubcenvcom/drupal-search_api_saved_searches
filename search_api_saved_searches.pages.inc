@@ -53,6 +53,49 @@ function search_api_saved_searches_user_listing($account) {
 }
 
 /**
+ * Page callback for manually creating a new saved search.
+ *
+ * @param SearchApiSavedSearchesSettings $settings
+ *   (optional) The settings to use. If not present, either the only available
+ *   settings will be used, or a form for selecting one will be displayed.
+ */
+function search_api_saved_searches_create_manual(SearchApiSavedSearchesSettings $settings = NULL) {
+  if (!isset($settings)) {
+    foreach (search_api_saved_searches_settings_load_multiple(FALSE, array('enabled' => TRUE)) as $settings) {
+      if (!empty($settings->options['manual']['allow'])) {
+        $available_settings[$settings->delta] = $settings;
+      }
+    }
+    if (empty($available_settings)) {
+      return t('There are no searches for which saved searches can be created manually.');
+    }
+    if (count($available_settings) == 1) {
+      $settings = reset($available_settings);
+    }
+    else {
+      $render = array();
+      $render['question']['#markup'] = t('For which search do you want to create a saved search?');
+      $render['list']['#theme'] = 'list';
+      $render['list']['#items'] = array();
+      $base = 'search-api/saved-searches/add/';
+      foreach ($available_settings as $id => $settings) {
+        $name = $settings->index()->name;
+        if (!empty($settings->options['manual']['page']['path'])) {
+          $item = menu_get_item($settings->options['manual']['page']['path']);
+          if (!empty($item['title'])) {
+            $name = $item['title'];
+          }
+        }
+        $render['list']['#items'][]['#markup'] = l($name, $base . $id);
+      }
+      return $render;
+    }
+  }
+
+  return drupal_get_form('search_api_saved_searches_save_form', $settings);
+}
+
+/**
  * Page callback that activates a saved search.
  *
  * This is mostly necessary for anonymous users, but also when a user enters a

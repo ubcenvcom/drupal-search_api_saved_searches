@@ -293,7 +293,7 @@ function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $s
       }
     }
     else {
-      foreach (search_api_saved_searches_settings_load_multiple() as $settings) {
+      foreach (search_api_saved_searches_settings_load_multiple(FALSE, array('enabled' => TRUE)) as $settings) {
         if (!empty($settings->options['manual']['allow'])) {
           $found = TRUE;
           break;
