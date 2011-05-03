@@ -28,11 +28,12 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
   if (!$settings) {
     $delta = $index->machine_name;
     if (strlen($delta) > 32) {
-      $delta = $base = substr($delte, 0, 32);
-      for ($i = 1; search_api_saved_searches_settings_load($delta); ++$i) {
-        $suffix = '_' . $i;
-        $delta = substr($base, 0, 32 - strlen($suffix)) . $suffix;
-      }
+      $delta = substr($delte, 0, 32);
+    }
+    $base = $delta;
+    for ($i = 1; search_api_saved_searches_settings_load($delta); ++$i) {
+      $suffix = '_' . $i;
+      $delta = substr($base, 0, 32 - strlen($suffix)) . $suffix;
     }
     $settings = new SearchApiSavedSearchesSettings(array(
       'delta' => $delta,
@@ -57,6 +58,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
     ),
     'set_interval' => 60 * 60 * 24,
     'mail' => array(),
+    'manual' => array(),
   );
   $settings->options['mail'] += array(
     'activate' => array(),
@@ -90,10 +92,23 @@ You can configure your saved searches at the following address:
         ":\n[search-api-saved-search:items]",
     'result' => '[search-api-saved-search-result:label] ([search-api-saved-search-result:url])',
   );
+  $settings->options['manual'] += array(
+    'allow' => FALSE,
+    'fulltext' => FALSE,
+    'fields' => array(),
+    'page' => array(),
+  );
+  $settings->options['manual']['page'] += array(
+    'path' => '',
+    'fulltext' => '',
+    'direct_filter_params' => FALSE,
+  );
+
   $form_state['settings'] = $settings;
   $options = $settings->options;
 
   $form['#tree'] = TRUE;
+  $form['#attached']['css'][] = drupal_get_path('module', 'search_api') . '/search_api.admin.css';
   $form['enabled'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable'),
@@ -319,7 +334,77 @@ You can configure your saved searches at the following address:
       array('@varstyle' => "[$type:*]"));
   }
 
-  // @todo Options for creating a creation form.
+  $form['options']['manual'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Manual saved search creation'),
+    '#description' => t('This provides a form to users where they can create a saved search manually, without first executing a search.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => $settings->enabled,
+  );
+  $form['options']['manual']['allow'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow manual creation of saved searches'),
+    '#default_value' => $options['manual']['allow'],
+  );
+  $form['options']['manual']['fulltext'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Provide textfield for fulltext keywords'),
+    '#default_value' => $options['manual']['fulltext'],
+  );
+  if (!empty($index->options['fields'])) {
+    $fields = array();
+    foreach ($index->options['fields'] as $field => $info) {
+      if ($info['indexed']) {
+        $fields[$field] = $info['name'];
+      }
+    }
+  }
+  if (!empty($fields)) {
+    $form['options']['manual']['fields'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Fields for which to provide filter options'),
+      '#options' => $fields,
+      '#attributes' => array(
+        'class' => array('search-api-checkboxes-list'),
+      ),
+      '#default_value' => drupal_map_assoc($options['manual']['fields']),
+    );
+  }
+  $form['options']['manual']['page'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Search page'),
+    '#description' => t('Specify the page where search results can be viewed.'),
+    '#collapsible' => TRUE,
+  );
+  $form['options']['manual']['page']['path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Base path'),
+    '#description' => t('Base path for a search without any of the restrictions that can be applied. ' .
+        'If this is not specified, no link to a search page will be provided to users for manually created searches.'),
+    '#default_value' => $options['manual']['page']['path'],
+  );
+  $form['options']['manual']['page']['fulltext'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Fulltext URL parameter'),
+    '#description' => t('Query parameter used for passing the fulltext keywords in the URL. ' .
+        'If left empty, the fulltext keywords (if present at all) will be appended to the path, instead of being passed as a parameter.'),
+    '#default_value' => $options['manual']['page']['fulltext'],
+  );
+  $form['options']['manual']['page']['direct_filter_params'] = array(
+    '#type' => 'select',
+    '#title' => t('Method for passing filter values in the URL'),
+    '#options' => array(
+      FALSE => t('In filter[*], as used by facets'),
+      TRUE => t('As direct URL parameters'),
+    ),
+    '#default_value' => $options['manual']['page']['direct_filter_params'],
+  );
+  foreach (array('fulltext', 'fields', 'page') as $v) {
+    $form['options']['manual'][$v]['#states']['visible'][':input[name="options[manual][allow]"]']['checked'] = TRUE;
+  }
+  foreach (array('fulltext', 'direct_filter_params') as $v) {
+    $form['options']['manual']['page'][$v]['#states']['visible'][':input[name="options[manual][page][path]"]']['empty'] = FALSE;
+  }
 
   $form['submit'] = array(
     '#type' => 'submit',
@@ -379,6 +464,7 @@ function search_api_saved_searches_index_edit_submit(array $form, array &$form_s
     $options['set_interval'] = $options['set_interval_custom'];
   }
   unset($options['set_interval_custom']);
+  $options['manual']['fields'] = array_keys(array_filter($options['manual']['fields']));
 
   $settings->enabled = $values['enabled'];
   $settings->options = $options;
