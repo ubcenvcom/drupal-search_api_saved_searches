@@ -183,10 +183,12 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
               $replacements[$original] = $search->url();
               break;
             case 'activate-url':
-              $replacements[$original] = url('search-api/saved-search/' . $search->id . '/activate', $url_options);
+              $key = isset($search->options['key']) ? '/' . $search->options['key'] : '';
+              $replacements[$original] = url('search-api/saved-search/' . $search->id . '/activate' . $key, $url_options);
               break;
             case 'delete-url':
-              $replacements[$original] = url('search-api/saved-search/' . $search->id . '/delete', $url_options);
+              $key = isset($search->options['key']) ? '/' . $search->options['key'] : '';
+              $replacements[$original] = url('search-api/saved-search/' . $search->id . '/delete' . $key, $url_options);
               break;
           }
         }
