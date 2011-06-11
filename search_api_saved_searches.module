@@ -162,6 +162,10 @@ function search_api_saved_searches_search_api_index_update(SearchApiIndex $index
  * Deletes the settings associated with a search index.
  */
 function search_api_saved_searches_search_api_index_delete(SearchApiIndex $index) {
+  // Only react on real delete, not revert.
+  if ($index->status & ENTITY_IN_CODE) {
+    return;
+  }
   foreach (search_api_saved_searches_settings_load_multiple(FALSE, array('index_id' => $index->machine_name)) as $settings) {
     $settings->delete();
   }
@@ -761,6 +765,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
  */
 function _search_api_saved_searches_create_name(array $query) {
   if (!empty($query['original_keys'])) {
+    // @todo This could be an array under some circumstances.
     $ret[] = $query['original_keys'];
   }
   // @todo File through filters, looking for things that could go in a name.
