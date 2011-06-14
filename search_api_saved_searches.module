@@ -11,7 +11,7 @@
 function search_api_saved_searches_menu() {
   $items['admin/config/search/search_api/index/%search_api_index/saved_searches'] = array(
     'title' => 'Saved searches',
-    'description' => 'Let users saves searches on this index.',
+    'description' => 'Let users save searches on this index.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('search_api_saved_searches_index_edit', 5),
     'access arguments' => array('administer search_api_saved_searches'),
@@ -717,7 +717,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     $query = array_intersect_key($form_state['query'], drupal_map_assoc(array('keys', 'fields', 'filters', 'options')));
   }
 
-  $search = new SearchApiSavedSearch(array(
+  $search = entity_create('search_api_saved_search', array(
     'uid' => $user->uid,
     'settings_id' => $settings->id,
     'enabled' => $user->mail == $values['mail'] || user_access('administer search_api_saved_searches'),

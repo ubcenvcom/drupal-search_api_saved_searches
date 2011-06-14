@@ -35,7 +35,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
       $suffix = '_' . $i;
       $delta = substr($base, 0, 32 - strlen($suffix)) . $suffix;
     }
-    $settings = new SearchApiSavedSearchesSettings(array(
+    $settings = entity_create('search_api_saved_searches_settings', array(
       'delta' => $delta,
       'index_id' => $index->machine_name,
       'enabled' => FALSE,
