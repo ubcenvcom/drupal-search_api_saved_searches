@@ -205,10 +205,10 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
         $entity = $d['entity'];
         $entity_type = $search->index()->entity_type;
         foreach ($tokens as $name => $original) {
-          if ($name == 'label' && ($label == entity_label($entity_type, $entity))) {
+          if ($name == 'label' && ($label = entity_label($entity_type, $entity))) {
             $replacements[$original] = $label;
           }
-          elseif ($name == 'url' && ($url == entity_uri($entity_type, $entity))) {
+          elseif ($name == 'url' && ($url = entity_uri($entity_type, $entity))) {
             if ($entity_type == 'file') {
               $url = array(
                 'path' => file_create_url($url),
