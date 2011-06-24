@@ -156,3 +156,19 @@ function search_api_saved_searches_schema() {
 function search_api_saved_searches_uninstall() {
   variable_del('search_api_saved_searches_search_ids');
 }
+
+/**
+ * Update searches to correctly use the settings' delta, not numeric ID, as the identifier.
+ */
+function search_api_saved_searches_update_7101() {
+  $settings = db_query('SELECT id, delta FROM {search_api_saved_searches_settings}')->fetchAllKeyed();
+  db_delete('search_api_saved_search')
+    ->condition('settings_id', array_keys($settings), 'NOT IN')
+    ->execute();
+  foreach ($settings as $id => $delta) {
+    db_update('search_api_saved_search')
+      ->condition('settings_id', $id)
+      ->fields(array('settings_id' => $delta))
+      ->execute();
+  }
+}

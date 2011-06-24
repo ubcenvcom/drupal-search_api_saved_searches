@@ -719,7 +719,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
 
   $search = entity_create('search_api_saved_search', array(
     'uid' => $user->uid,
-    'settings_id' => $settings->id,
+    'settings_id' => $settings->delta,
     'enabled' => $user->mail == $values['mail'] || user_access('administer search_api_saved_searches'),
     'name' => $values['name'],
     'mail' => $values['mail'],
@@ -885,48 +885,53 @@ function search_api_saved_searches_cron_queue_info() {
  *   these should have the same mail address and base settings.
  */
 function search_api_saved_searches_check_updates(array $searches) {
-  $search = reset($searches);
-  $settings = $search->settings();
-  $index = $settings->index();
-  $entity_type = $index->entity_type;
-  $mail_params = array();
-  foreach ($searches as $search) {
-    $old = explode(',', $search->results);
-    // Get actual results for the query.
-    $query = $search->query();
-    $response = $query->execute();
-    if (!empty($response['results'])) {
-      $results = array_keys($response['results']);
-      // Compare these results to the old ones.
-      $new = array_diff_key(drupal_map_assoc($results), drupal_map_assoc($old));
-      if ($new) {
-        // We have new results: send them to the user.
-        $new_results = entity_load($entity_type, $new);
-        // Let other modules alter these results.
-        drupal_alter('search_api_saved_searches_new_results', $new_results, $search);
-        if ($new_results) {
-          $mail_params['searches'][] = array(
-            'search' => $search,
-            'results' => $new_results,
-          );
+  try {
+    $search = reset($searches);
+    $settings = $search->settings();
+    $index = $settings->index();
+    $entity_type = $index->entity_type;
+    $mail_params = array();
+    foreach ($searches as $search) {
+      $old = explode(',', $search->results);
+      // Get actual results for the query.
+      $query = $search->query();
+      $response = $query->execute();
+      if (!empty($response['results'])) {
+        $results = array_keys($response['results']);
+        // Compare these results to the old ones.
+        $new = array_diff_key(drupal_map_assoc($results), drupal_map_assoc($old));
+        if ($new) {
+          // We have new results: send them to the user.
+          $new_results = entity_load($entity_type, $new);
+          // Let other modules alter these results.
+          drupal_alter('search_api_saved_searches_new_results', $new_results, $search);
+          if ($new_results) {
+            $mail_params['searches'][] = array(
+              'search' => $search,
+              'results' => $new_results,
+            );
+          }
+        }
+        if ($new || array_diff($old, $results)) {
+          // The results changed in some way: store the latest version.
+          $search->results = implode(',', $results);
+          $search->save();
         }
       }
-      if ($new || array_diff($old, $results)) {
-        // The results changed in some way: store the latest version.
-        $search->results = implode(',', $results);
-        $search->save();
+    }
+    // If we set any searches in the mail parameters, send the mail.
+    if ($mail_params) {
+      $mail_params['user'] = user_load($search->uid);
+      $mail_params['settings'] = $settings;
+      $message = drupal_mail('search_api_saved_searches', 'notify', $search->mail,
+          user_preferred_language($mail_params['user']), $mail_params);
+      if ($message['result']) {
+        watchdog('search_api_saved_searches', 'A mail with new saved search results was sent to !mail.',
+            array('!mail' => $search->mail), WATCHDOG_INFO);
       }
     }
   }
-  // If we set any searches in the mail parameters, send the mail.
-  if ($mail_params) {
-    $mail_params['user'] = user_load($search->uid);
-    $mail_params['settings'] = $settings;
-    $message = drupal_mail('search_api_saved_searches', 'notify', $search->mail,
-        user_preferred_language($mail_params['user']), $mail_params);
-    if ($message['result']) {
-      watchdog('search_api_saved_searches', 'A mail with new saved search results was sent to !mail.',
-          array('!mail' => $search->mail), WATCHDOG_INFO);
-    }
+  catch (SearchApiException $e) {
+    watchdog('search_api_saved_searches', $e->getMessage(), NULL, WATCHDOG_ERROR);
   }
 }
