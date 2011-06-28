@@ -85,6 +85,10 @@ function search_api_saved_searches_token_info() {
     'name' => t('Delete URL'),
     'description' => t('The URL for deleting the saved search.'),
   );
+  $tokens['search-api-saved-search-result']['id'] = array(
+    'name' => t('ID'),
+    'description' => t('The entity id for the result.'),
+  );
   $tokens['search-api-saved-search-result']['label'] = array(
     'name' => t('Label'),
     'description' => t('The human-readable label for the result.'),
@@ -205,7 +209,10 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
         $entity = $d['entity'];
         $entity_type = $search->index()->entity_type;
         foreach ($tokens as $name => $original) {
-          if ($name == 'label' && ($label = entity_label($entity_type, $entity))) {
+          if ($name == 'id' && ($id = entity_id($entity_type, $entity))) {
+            $replacements[$original] = $id;
+          }
+          elseif ($name == 'label' && ($label = entity_label($entity_type, $entity))) {
             $replacements[$original] = $label;
           }
           elseif ($name == 'url' && ($url = entity_uri($entity_type, $entity))) {
