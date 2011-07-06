@@ -109,6 +109,7 @@ function search_api_saved_searches_entity_info() {
     'entity keys' => array(
       'id' => 'id',
       'name' => 'delta',
+      'label' => 'delta',
     ),
   );
   $info['search_api_saved_search'] = array(
