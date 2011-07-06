@@ -100,7 +100,7 @@ function search_api_saved_searches_permission() {
 function search_api_saved_searches_entity_info() {
   $info['search_api_saved_searches_settings'] = array(
     'label' => t('Saved search settings'),
-    'controller class' => 'EntityAPIController',
+    'controller class' => 'EntityAPIControllerExportable',
     'entity class' => 'SearchApiSavedSearchesSettings',
     'base table' => 'search_api_saved_searches_settings',
     'uri callback' => 'search_api_saved_searches_settings_url',
@@ -242,7 +242,7 @@ function search_api_saved_searches_settings_load($id, $reset = FALSE) {
  *   An array of SearchApiSavedSearchesSettings objects matching the conditions.
  */
 function search_api_saved_searches_settings_load_multiple($ids = FALSE, array $conditions = array(), $reset = FALSE) {
-  return entity_load('search_api_saved_searches_settings', $ids, $conditions, $reset);
+  return entity_load_multiple_by_name('search_api_saved_searches_settings', $ids, $conditions, $reset);
 }
 
 /**
