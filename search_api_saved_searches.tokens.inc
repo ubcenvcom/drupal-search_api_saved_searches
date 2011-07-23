@@ -25,11 +25,11 @@
  *   search_api_saved_search_info.
  * - search_api_saved_search_info: An associative array containing:
  *   - search: A SearchApiSavedSearch entity object.
- *   - results: An array of entities of the type that the index associated with
+ *   - results: An array of items of the type that the index associated with
  *     the saved search contains.
  * - search_api_saved_search_result_info: An associative array containing:
  *   - search: A SearchApiSavedSearch entity object.
- *   - entity: An entity of the type corresponding to the saved search.
+ *   - entity: An item of the type corresponding to the saved search.
  *
  * @see search_api_saved_searches_tokens()
  */
@@ -87,7 +87,7 @@ function search_api_saved_searches_token_info() {
   );
   $tokens['search-api-saved-search-result']['id'] = array(
     'name' => t('ID'),
-    'description' => t('The entity id for the result.'),
+    'description' => t('The item id for the result.'),
   );
   $tokens['search-api-saved-search-result']['label'] = array(
     'name' => t('Label'),
@@ -167,14 +167,14 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
                 if (empty($settings->options['mail']['notify']['result'])) {
                   break;
                 }
-                $entity_type = $search->index()->entity_type;
+                $item_type = $search->index()->item_type;
                 $text = $settings->options['mail']['notify']['result'];
-                foreach ($data['search_api_saved_search_info']['results'] as $entity) {
+                foreach ($data['search_api_saved_search_info']['results'] as $item) {
                   $params = array(
-                    $entity_type => $entity,
+                    $item_type => $item,
                     'search_api_saved_search_result_info' => array(
                       'search' => $search,
-                      'entity' => $entity,
+                      'entity' => $item,
                     ),
                   );
                   $results[] = token_replace($text, $params, $options);
@@ -206,22 +206,16 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
       $d = $data['search_api_saved_search_result_info'];
       if (!empty($d['search']) && !empty($d['entity'])) {
         $search = $d['search'];
-        $entity = $d['entity'];
-        $entity_type = $search->index()->entity_type;
+        $index = $search->index();
+        $item = $d['entity'];
         foreach ($tokens as $name => $original) {
-          if ($name == 'id' && ($id = entity_id($entity_type, $entity))) {
+          if ($name == 'id' && ($id = $index->datasource()->getItemId($item))) {
             $replacements[$original] = $id;
           }
-          elseif ($name == 'label' && ($label = entity_label($entity_type, $entity))) {
+          elseif ($name == 'label' && ($label = $index->datasource()->getItemLabel($item))) {
             $replacements[$original] = $label;
           }
-          elseif ($name == 'url' && ($url = entity_uri($entity_type, $entity))) {
-            if ($entity_type == 'file') {
-              $url = array(
-                'path' => file_create_url($url),
-                'options' => array(),
-              );
-            }
+          elseif ($name == 'url' && ($url = $index->datasource()->getItemUrl($item))) {
             $url['options'] += $url_options;
             $replacements[$original] = url($url['path'], $url['options']);
           }

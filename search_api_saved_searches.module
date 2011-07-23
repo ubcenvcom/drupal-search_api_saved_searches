@@ -890,7 +890,6 @@ function search_api_saved_searches_check_updates(array $searches) {
     $search = reset($searches);
     $settings = $search->settings();
     $index = $settings->index();
-    $entity_type = $index->entity_type;
     $mail_params = array();
     foreach ($searches as $search) {
       $old = explode(',', $search->results);
@@ -903,7 +902,7 @@ function search_api_saved_searches_check_updates(array $searches) {
         $new = array_diff_key(drupal_map_assoc($results), drupal_map_assoc($old));
         if ($new) {
           // We have new results: send them to the user.
-          $new_results = entity_load($entity_type, $new);
+          $new_results = $index->loadItems($new);
           // Let other modules alter these results.
           drupal_alter('search_api_saved_searches_new_results', $new_results, $search);
           if ($new_results) {

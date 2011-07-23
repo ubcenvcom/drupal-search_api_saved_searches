@@ -328,7 +328,7 @@ You can configure your saved searches at the following address:
     '#required' => TRUE,
   );
   $tokens = token_info();
-  $type = $index->entity_type;
+  $type = $index->item_type;
   if (isset($tokens['types'][$type])) {
     $form['options']['mail']['notify']['result']['#description'] .= ' ' . t('You can also use the @varstyle variables.',
       array('@varstyle' => "[$type:*]"));
