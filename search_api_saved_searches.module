@@ -728,16 +728,14 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     'last_execute' => REQUEST_TIME,
     'notify_interval' => $values['notify_interval'],
     'query' => $query,
-    'options' => array(
-      'page' => $form_state['page'],
-    ),
+    'options' => array(),
   ));
   if (!empty($form_state['page'])) {
     $search->options['page'] = $form_state['page'];
     $form_state['redirect'] = array($form_state['page']['path'], $form_state['page']);
   }
   elseif ($user->uid) {
-
+    $form_state['redirect'] = 'user/' . $user->uid . '/saved-searches';
   }
   if (!$search->enabled && $user->uid) {
     if (search_api_saved_search_load_multiple(FALSE, array('enabled' => TRUE, 'uid' => $user->uid, 'mail' => $search->mail))) {
