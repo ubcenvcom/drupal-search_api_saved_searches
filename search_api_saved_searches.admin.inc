@@ -28,7 +28,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
   if (!$settings) {
     $delta = $index->machine_name;
     if (strlen($delta) > 32) {
-      $delta = substr($delte, 0, 32);
+      $delta = substr($delta, 0, 32);
     }
     $base = $delta;
     for ($i = 1; search_api_saved_searches_settings_load($delta); ++$i) {

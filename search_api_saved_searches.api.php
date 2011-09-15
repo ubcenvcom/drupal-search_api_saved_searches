@@ -22,9 +22,9 @@
  * @see hook_entity_load()
  */
 function hook_search_api_saved_search_load(array $searches) {
-  $result = db_query('SELECT pid, foo FROM {mytable} WHERE pid IN(:ids)', array(':ids' => array_keys($entities)));
+  $result = db_query('SELECT pid, foo FROM {mytable} WHERE pid IN(:ids)', array(':ids' => array_keys($searches)));
   foreach ($result as $record) {
-    $entities[$record->pid]->foo = $record->foo;
+    $searches[$record->pid]->foo = $record->foo;
   }
 }
 
@@ -220,8 +220,8 @@ function hook_default_search_api_saved_search_settings_alter(array &$defaults) {
 function hook_search_api_saved_searches_new_results_alter(array &$results, SearchApiSavedSearch $search) {
   // Remove all results with an ID that is a multiple of 6.
   foreach (array_keys($results) as $id) {
-    if ($i % 6 == 0) {
-      unset($results[$i]);
+    if ($id % 6 == 0) {
+      unset($results[$id]);
     }
   }
 }
