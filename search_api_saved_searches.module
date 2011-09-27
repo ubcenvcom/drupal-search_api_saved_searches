@@ -202,6 +202,11 @@ function search_api_saved_searches_search_api_saved_searches_settings_update(Sea
  * Clear block caches when enabled saved search settings are deleted.
  */
 function search_api_saved_searches_search_api_saved_searches_settings_delete(SearchApiSavedSearchesSettings $settings) {
+  // Only react on real delete, not revert.
+  if ($settings->status & ENTITY_IN_CODE) {
+    return;
+  }
+
   foreach (search_api_saved_search_load_multiple(FALSE, array('settings_id' => $settings->delta)) as $search) {
     $search->delete();
   }
