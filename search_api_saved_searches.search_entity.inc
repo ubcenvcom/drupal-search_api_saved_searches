@@ -113,7 +113,7 @@ class SearchApiSavedSearch extends Entity {
    */
   public function save() {
     if (!$this->enabled && empty($this->options['key'])) {
-      $this->options['key'] = base64_encode(drupal_random_bytes(12));
+      $this->options['key'] = drupal_hash_base64(drupal_random_bytes(12));
     }
     if ($this->enabled && !isset($this->results)) {
       $results = array();
