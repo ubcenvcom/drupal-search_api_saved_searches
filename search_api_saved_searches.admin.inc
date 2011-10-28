@@ -353,10 +353,8 @@ You can configure your saved searches at the following address:
   );
   if (!empty($index->options['fields'])) {
     $fields = array();
-    foreach ($index->options['fields'] as $field => $info) {
-      if ($info['indexed']) {
-        $fields[$field] = $info['name'];
-      }
+    foreach ($index->getFields() as $field => $info) {
+      $fields[$field] = $info['name'];
     }
   }
   if (!empty($fields)) {

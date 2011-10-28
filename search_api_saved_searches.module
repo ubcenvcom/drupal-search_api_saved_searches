@@ -606,7 +606,7 @@ function _search_api_saved_searches_create_search_form(SearchApiSavedSearchesSet
   }
   if (!empty($options['fields'])) {
     foreach ($options['fields'] as $field) {
-      if (!empty($index->options['fields'][$field]['indexed'])) {
+      if (!empty($index->options['fields'][$field])) {
         // Extract the necessary field information out of the wrapper.
         $tmp = $wrapper;
         foreach (explode(':', $field) as $part) {
