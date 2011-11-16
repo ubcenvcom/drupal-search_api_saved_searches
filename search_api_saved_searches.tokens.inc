@@ -54,6 +54,7 @@ function search_api_saved_searches_token_info() {
   $tokens['user']['search-api-saved-searches-url'] = array(
     'name' => t('Config URL'),
     'description' => t('The URL under which a user can configure her saved searches.'),
+    'type' => 'url',
   );
   $tokens['search-api-saved-searches']['results'] = array(
     'name' => t('Results'),
@@ -76,14 +77,17 @@ function search_api_saved_searches_token_info() {
   $search['view-url'] = array(
     'name' => t('View URL'),
     'description' => t('The URL of the page displaying this search, if any.'),
+    'type' => 'url',
   );
   $search['activate-url'] = array(
     'name' => t('Activate URL'),
     'description' => t('The URL for activating the saved search, if necessary.'),
+    'type' => 'url',
   );
   $search['delete-url'] = array(
     'name' => t('Delete URL'),
     'description' => t('The URL for deleting the saved search.'),
+    'type' => 'url',
   );
   $tokens['search-api-saved-search-result']['id'] = array(
     'name' => t('ID'),
@@ -96,6 +100,7 @@ function search_api_saved_searches_token_info() {
   $tokens['search-api-saved-search-result']['url'] = array(
     'name' => t('URL'),
     'description' => t('The URL at which the result can be viewed.'),
+    'type' => 'url',
   );
 
   return $info;
@@ -124,6 +129,11 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
       if (!empty($data['user']->uid)) {
         if (isset($tokens['search-api-saved-searches-url'])) {
           $replacements[$tokens['search-api-saved-searches-url']] = url('user/' . $data['user']->uid . '/saved-searches', $url_options);
+        }
+        if ($url_tokens = token_find_with_prefix($tokens, 'search-api-saved-searches-url')) {
+          $replacements += token_generate('url', $url_tokens, array(
+            'path' => 'user/' . $data['user']->uid . '/saved-searches',
+          ), $options);
         }
       }
       break;
@@ -199,6 +209,23 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
         if ($created_tokens = token_find_with_prefix($tokens, 'created')) {
           $replacements += token_generate('date', $created_tokens, array('date' => $search->created), $options);
         }
+        if ($view_url_tokens = token_find_with_prefix($tokens, 'view-url')) {
+          $replacements += token_generate('url', $view_url_tokens, array(
+            'path' => $search->url(),
+          ), $options);
+        }
+        if ($activate_url_tokens = token_find_with_prefix($tokens, 'activate-url')) {
+          $key = isset($search->options['key']) ? '/' . $search->options['key'] : '';
+          $replacements += token_generate('url', $activate_url_tokens, array(
+            'path' => 'search-api/saved-search/' . $search->id . '/activate' . $key,
+          ), $options);
+        }
+        if ($delete_url_tokens = token_find_with_prefix($tokens, 'delete-url')) {
+          $key = isset($search->options['key']) ? '/' . $search->options['key'] : '';
+          $replacements += token_generate('url', $delete_url_tokens, array(
+            'path' => 'search-api/saved-search/' . $search->id . '/delete' . $key,
+          ), $options);
+        }
       }
       break;
 
@@ -219,6 +246,9 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
             $url['options'] += $url_options;
             $replacements[$original] = url($url['path'], $url['options']);
           }
+        }
+        if (($url_tokens = token_find_with_prefix($tokens, 'url')) && ($url = entity_uri($entity_type, $entity))) {
+          $replacements += token_generate('url', $url_tokens, $url, $options);
         }
       }
       break;
