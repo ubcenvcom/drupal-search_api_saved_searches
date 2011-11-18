@@ -247,7 +247,7 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
             $replacements[$original] = url($url['path'], $url['options']);
           }
         }
-        if (($url_tokens = token_find_with_prefix($tokens, 'url')) && ($url = entity_uri($entity_type, $entity))) {
+        if (($url_tokens = token_find_with_prefix($tokens, 'url')) && ($url = $index->datasource()->getItemUrl($item))) {
           $replacements += token_generate('url', $url_tokens, $url, $options);
         }
       }
