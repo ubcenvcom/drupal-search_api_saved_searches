@@ -929,8 +929,8 @@ function search_api_saved_searches_check_updates(array $searches) {
       $message = drupal_mail('search_api_saved_searches', 'notify', $search->mail,
           user_preferred_language($mail_params['user']), $mail_params);
       if ($message['result']) {
-        watchdog('search_api_saved_searches', 'A mail with new saved search results was sent to !mail.',
-            array('!mail' => $search->mail), WATCHDOG_INFO);
+        watchdog('search_api_saved_searches', 'A mail with new saved search results was sent to @mail.',
+            array('@mail' => $search->mail), WATCHDOG_INFO);
       }
     }
   }
