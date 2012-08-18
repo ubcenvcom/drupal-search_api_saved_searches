@@ -896,6 +896,9 @@ function search_api_saved_searches_check_updates(array $searches) {
     $mail_params = array();
     foreach ($searches as $search) {
       $old = explode(',', $search->results);
+      // Make sure we run the query as the user who owns the saved search.
+      // Otherwise node access won't work properly.
+      $search->query['options']['search_api_access_account'] = $search->uid;
       // Get actual results for the query.
       $query = $search->query();
       $response = $query->execute();
