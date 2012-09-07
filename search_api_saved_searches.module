@@ -510,6 +510,13 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
   }
   $form_state['settings'] = $settings;
 
+  if (!empty($settings->options['description'])) {
+    $form['description'] = array(
+      '#type' => 'item',
+      '#description' => _filter_autop(check_plain($settings->options['description'])),
+    );
+  }
+
   if (empty($form_state['query'])) {
     $form['query'] = _search_api_saved_searches_create_search_form($settings);
     $form['name'] = array(
@@ -522,10 +529,22 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
   else {
     $form['#prefix'] = '<div id="search-api-saved-searches-save-form-wrapper">';
     $form['#suffix'] = '</div>';
-    $form['name'] = array(
-      '#type' => 'value',
-      '#value' => _search_api_saved_searches_create_name($form_state['query']),
-    );
+    if (empty($settings->options['choose_name'])) {
+      $form['name'] = array(
+        '#type' => 'value',
+        '#value' => _search_api_saved_searches_create_name($form_state['query']),
+      );
+    }
+    else {
+      $form['name'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Name'),
+        '#maxlength' => 50,
+        '#size' => 16,
+        '#required' => TRUE,
+        '#default_value' => _search_api_saved_searches_create_name($form_state['query']),
+      );
+    }
   }
   if (empty($user->mail) || $settings->options['registered_choose_mail']) {
     $form['mail'] = array(

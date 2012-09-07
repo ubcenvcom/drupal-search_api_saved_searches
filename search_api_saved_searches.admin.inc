@@ -48,9 +48,11 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
 
   // Set default options.
   $settings->options += array(
+    'description' => '',
     'default_true' => TRUE,
     'ids_list' => array(),
     'registered_choose_mail' => FALSE,
+    'choose_name' => FALSE,
     'user_select_interval' => TRUE,
     'interval_options' => array(
       60 * 60 * 24     => t('Daily'),
@@ -131,6 +133,13 @@ You can configure your saved searches at the following address:
     '#collapsible' => TRUE,
     '#collapsed' => $settings->enabled,
   );
+  $form['options']['misc']['description'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Description'),
+    '#description' => t('Enter a text that will be displayed to users when creating a saved search.'),
+    '#default_value' => $settings->options['description'],
+    '#parents' => array('options', 'description'),
+  );
   $search_ids = variable_get('search_api_saved_searches_search_ids', array());
   if (empty($search_ids[$index->machine_name]) || count($search_ids[$index->machine_name]) <= 1) {
     $form['options']['default_true'] = array(
@@ -168,6 +177,12 @@ You can configure your saved searches at the following address:
     '#title' => t('Let logged-in users also enter a different mail address'),
     '#default_value' => $options['registered_choose_mail'],
     '#parents' => array('options', 'registered_choose_mail'),
+  );
+  $form['options']['misc']['choose_name'] = array(
+    '#type' => 'checkbox',
+    '#title' => t("Let users modify the saved search's name even when not manually creating it."),
+    '#default_value' => $options['choose_name'],
+    '#parents' => array('options', 'choose_name'),
   );
 
   // @todo Access options? Maximum number of saved searches per user, maximum
