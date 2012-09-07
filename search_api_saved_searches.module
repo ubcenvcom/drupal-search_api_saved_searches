@@ -129,6 +129,68 @@ function search_api_saved_searches_entity_info() {
 }
 
 /**
+ * Implements hook_entity_property_info_alter().
+ *
+ * Corrects the types which the Entity API automatically infers from the schema.
+ * Otherwise, the "token" types would be "text", and "boolean" and "date" would
+ * be "integer".
+ *
+ * Fixing this here automatically also fixes the Views integration provided by
+ * the Entity API, regarding these types.
+ */
+function search_api_saved_searches_entity_property_info_alter(array &$info) {
+  $settings = &$info['search_api_saved_searches_settings']['properties'];
+  $settings['index_id']['type'] = 'token';
+  $settings['enabled']['type'] = 'boolean';
+  $settings['module']['type'] = 'token';
+
+  $searches = &$info['search_api_saved_search']['properties'];
+  $searches['settings_id']['type'] = 'token';
+  $searches['enabled']['type'] = 'boolean';
+  $searches['created']['type'] = 'date';
+  $searches['last_execute']['type'] = 'date';
+  // We can't assign "duration" until Entity API Views integration supports
+  // this.
+  //$searches['notify_interval']['type'] = 'duration';
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function search_api_saved_searches_views_api() {
+  return array(
+    'api' => 3,
+  );
+}
+
+/**
+ * Implements hook_views_data_alter().
+ *
+ * Adds relationships to the creator of a saved search, its settings and the
+ * search index.
+ */
+function search_api_saved_searches_views_data_alter(array &$data) {
+  $data['search_api_saved_searches_settings']['index_id']['relationship'] = array(
+    'base' => 'search_api_index',
+    'base field' => 'machine_name',
+    'title' => t('Search index'),
+    'label' => t('search index'),
+  );
+  $data['search_api_saved_search']['uid']['relationship'] = array(
+    'base' => 'users',
+    'base field' => 'uid',
+    'title' => t('User'),
+    'label' => t('user'),
+  );
+  $data['search_api_saved_search']['settings_id']['relationship'] = array(
+    'base' => 'search_api_saved_searches_settings',
+    'base field' => 'delta',
+    'title' => t('Settings'),
+    'label' => t('settings'),
+  );
+}
+
+/**
  * URL callback for settings entities.
  */
 function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $settings) {
