@@ -535,7 +535,7 @@ function search_api_saved_searches_block_view($delta = '') {
 
   return array(
     'subject' => t('Save search'),
-    'content' => drupal_get_form('search_api_saved_searches_save_form', $settings, $query),
+    'content' => array('form' => drupal_get_form('search_api_saved_searches_save_form', $settings, $query)),
   );
 }
 
