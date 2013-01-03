@@ -804,10 +804,19 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     $query = array_intersect_key($form_state['query'], drupal_map_assoc(array('keys', 'fields', 'filters', 'options')));
   }
 
+  // Enable the saved search right away, if a logged-in user uses their own mail
+  // address, or when they have admin privileges, or when activation mails are
+  // generally deactivated, or if there are already active saved searches for
+  // that user with that mail address. Otherwise, an activation mail will be
+  // sent.
+  $enabled = (!empty($user->mail) && $user->mail == $values['mail'])
+      || user_access('administer search_api_saved_searches')
+      || empty($settings->options['mail']['activate']['send'])
+      || ($user->uid && search_api_saved_search_load_multiple(FALSE, array('enabled' => TRUE, 'uid' => $user->uid, 'mail' => $values['mail'])));
   $search = entity_create('search_api_saved_search', array(
     'uid' => $user->uid,
     'settings_id' => $settings->delta,
-    'enabled' => (!empty($user->mail) && $user->mail == $values['mail']) || user_access('administer search_api_saved_searches'),
+    'enabled' => $enabled,
     'name' => $values['name'],
     'mail' => $values['mail'],
     'created' => REQUEST_TIME,
@@ -823,11 +832,6 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
   elseif ($user->uid) {
     $form_state['redirect'] = 'user/' . $user->uid . '/saved-searches';
   }
-  if (!$search->enabled && $user->uid) {
-    if (search_api_saved_search_load_multiple(FALSE, array('enabled' => TRUE, 'uid' => $user->uid, 'mail' => $search->mail))) {
-      $search->enabled = TRUE;
-    }
-  }
   $ret = $search->save();
   if (!$ret) {
     drupal_set_message(t('An error occurred while trying to save the search. Please contact the site administrator.'), 'error');
@@ -835,7 +839,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     return FALSE;
   }
   else {
-    if ($search->enabled) {
+    if ($enabled) {
       drupal_set_message(t('Your saved search was successfully created. You will receive e-mail notifications for new results in the future.'));
     }
     else {
