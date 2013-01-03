@@ -241,10 +241,8 @@ You can configure your saved searches at the following address:
     '#parents' => array('options', 'set_interval_custom'),
     '#states' => array(
       'visible' => array(
-        ':input[name="options[set_interval]"]' => array(
-          'visible' => TRUE,
-          'value' => '0',
-        ),
+        ':input[name="options[user_select_interval]"]' => array('checked' => FALSE),
+        ':input[name="options[set_interval]"]' => array('value' => 0),
       ),
     ),
   );
