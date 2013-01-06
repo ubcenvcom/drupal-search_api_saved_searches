@@ -10,9 +10,11 @@
  *
  * Provides the following tokens:
  * - [user:search-api-saved-searches-url]
+ * - [search-api-saved-searches:quantity]
  * - [search-api-saved-searches:results]
  * - [search-api-saved-search:name]
  * - [search-api-saved-search:created]
+ * - [search-api-saved-search:quantity]
  * - [search-api-saved-search:items]
  * - [search-api-saved-search:view-url]
  * - [search-api-saved-search:activate-url]
@@ -56,6 +58,10 @@ function search_api_saved_searches_token_info() {
     'description' => t('The URL under which a user can configure her saved searches.'),
     'type' => 'url',
   );
+  $tokens['search-api-saved-searches']['quantity'] = array(
+    'name' => t('Number of results'),
+    'description' => t('Number of results for all saved searches in this message.'),
+  );
   $tokens['search-api-saved-searches']['results'] = array(
     'name' => t('Results'),
     'description' => t('Text listing new results for one or more saved searches.'),
@@ -69,6 +75,10 @@ function search_api_saved_searches_token_info() {
     'name' => t('Date created'),
     'description' => t('The date on which the saved search was created.'),
     'type' => 'date',
+  );
+  $search['quantity'] = array(
+    'name' => t('Number of results'),
+    'description' => t('Number of results for the saved search.'),
   );
   $search['items'] = array(
     'name' => t('Results'),
@@ -156,6 +166,15 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
           $text = implode("\n\n", $results);
           $replacements[$tokens['results']] = $sanitize ? check_plain($text) : $text;
         }
+        if (isset($tokens['quantity'])) {
+          $quantity = 0;
+          foreach ($data['search_api_saved_searches'] as $info) {
+            if (isset($info['results'])) {
+              $quantity += count($info['results']);
+            }
+          }
+          $replacements[$tokens['quantity']] = $quantity;
+        }
       }
       break;
 
@@ -169,6 +188,13 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
               break;
             case 'created':
               $replacements[$original] = format_date($search->created, 'medium', '', NULL, $language_code);
+              break;
+            case 'quantity':
+              $settings = $search->settings();
+              if (empty($settings->options['mail']['notify']['result'])) {
+                break;
+              }
+              $replacements[$original] = count($data['search_api_saved_search_info']['results']);
               break;
             case 'items':
               if (!empty($data['search_api_saved_search_info']['results'])) {
