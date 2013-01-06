@@ -197,9 +197,55 @@ function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $
   return array('path' => 'admin/config/search/search_api/index/' . $settings->index_id . '/saved_searches');
 }
 
-// @todo Implement hook_user_*() to automatically assign new users all saved
-//   searches with their mail address after registration (and free it again if
-//   the user is deleted).
+/**
+ * Implements hook_user_insert().
+ *
+ * If a new user already has saved searches with the same mail address,
+ * associate them with the new user. However, only do this if the user is
+ * already active.
+ */
+function search_api_saved_searches_user_insert(&$edit, $account, $category) {
+  if (!empty($account->status)) {
+    foreach (search_api_saved_search_load_multiple(FALSE, array('mail' => $account->mail, 'uid' => 0)) as $search) {
+      $search->uid = $account->uid;
+      $search->save();
+    }
+  }
+}
+
+/**
+ * Implements hook_user_update().
+ *
+ * If a user gets activated, associate saved searches with the same mail address
+ * with them.
+ *
+ * Also, change mail address of saved searches when the user mail address
+ * changes.
+ */
+function search_api_saved_searches_user_update(&$edit, $account, $category) {
+  // Changes of mail and status (both directions)
+  if (!empty($account->status) && empty($account->original->status)) {
+    foreach (search_api_saved_search_load_multiple(FALSE, array('mail' => $account->mail, 'uid' => 0)) as $search) {
+      $search->uid = $account->uid;
+      $search->save();
+    }
+  }
+  if ($account->mail != $account->original->mail) {
+    foreach (search_api_saved_search_load_multiple(FALSE, array('mail' => $account->mail, 'uid' => $account->uid)) as $search) {
+      $search->mail = $account->mail;
+      $search->save();
+    }
+  }
+}
+
+/**
+ * Implements hook_user_delete().
+ *
+ * If a user is deleted, delete their saved searches, too.
+ */
+function search_api_saved_searches_user_delete($account) {
+  entity_delete_multiple('search_api_saved_search', array_keys(search_api_saved_search_load_multiple(FALSE, array('uid' => $account->uid))));
+}
 
 // @todo Rules integration
 
@@ -735,16 +781,13 @@ function search_api_saved_searches_save_form_validate(array $form, array &$form_
 /**
  * Form validation handler for search_api_saved_searches_save_form().
  *
- * @param $message
- *   (optional) Whether to set a message reporting success or failure.
- *
  * @return boolean
  *   TRUE iff the search was successfully saved.
  *
  * @see search_api_saved_searches_save_form()
  * @see search_api_saved_searches_save_form_validate()
  */
-function search_api_saved_searches_save_form_submit(array $form, array &$form_state, $message = TRUE) {
+function search_api_saved_searches_save_form_submit(array $form, array &$form_state) {
   global $user;
 
   $values = $form_state['values'];
@@ -813,8 +856,14 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
       || user_access('administer search_api_saved_searches')
       || empty($settings->options['mail']['activate']['send'])
       || ($user->uid && search_api_saved_search_load_multiple(FALSE, array('enabled' => TRUE, 'uid' => $user->uid, 'mail' => $values['mail'])));
+  // If an anonymous user uses an existing user's mail address to create a
+  // saved search, file the saved search under that user right away.
+  $uid = $user->uid;
+  if (!$uid && ($users = user_load_multiple(FALSE, array('mail' => $values['mail'], 'status' => 1)))) {
+    $uid = key($users);
+  }
   $search = entity_create('search_api_saved_search', array(
-    'uid' => $user->uid,
+    'uid' => $uid,
     'settings_id' => $settings->delta,
     'enabled' => $enabled,
     'name' => $values['name'],
@@ -825,6 +874,7 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     'query' => $query,
     'options' => array(),
   ));
+  // Choose where to redirect.
   if (!empty($form_state['page'])) {
     $search->options['page'] = $form_state['page'];
     $form_state['redirect'] = array($form_state['page']['path'], $form_state['page']);
@@ -832,7 +882,9 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
   elseif ($user->uid) {
     $form_state['redirect'] = 'user/' . $user->uid . '/saved-searches';
   }
+  // Save saved search.
   $ret = $search->save();
+  // Display success or error message.
   if (!$ret) {
     drupal_set_message(t('An error occurred while trying to save the search. Please contact the site administrator.'), 'error');
     $form_state['rebuild'] = TRUE;
