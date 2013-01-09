@@ -618,10 +618,11 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
   }
   $form_state['settings'] = $settings;
 
-  if (!empty($settings->options['description'])) {
+  $description = $settings->getTranslatedOption('description');
+  if (!empty($description)) {
     $form['description'] = array(
       '#type' => 'item',
-      '#description' => _filter_autop(check_plain($settings->options['description'])),
+      '#description' => _filter_autop(check_plain($description)),
     );
   }
 
@@ -675,7 +676,7 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
     $form['notify_interval'] = array(
       '#type' => 'select',
       '#title' => t('Notification interval'),
-      '#options' => $settings->options['interval_options'],
+      '#options' => $settings->getTranslatedOption('interval_options'),
       '#required' => TRUE,
     );
   }
@@ -944,9 +945,9 @@ function search_api_saved_searches_mail($key, array &$message, array $params) {
           'results' => array(),
         ),
       );
-      $title = $settings->options['mail']['activate']['title'];
+      $title = $settings->getTranslatedOption('mail.activate.title', $language->language);
       $message['subject'] .= token_replace($title, $data, array('language' => $language, 'sanitize' => FALSE));
-      $body = $settings->options['mail']['activate']['body'];
+      $body = $settings->getTranslatedOption('mail.activate.body', $language->language);
       $message['body'][] = token_replace($body, $data, array('language' => $language, 'sanitize' => FALSE));
       break;
 
@@ -956,9 +957,9 @@ function search_api_saved_searches_mail($key, array &$message, array $params) {
         'user' => $params['user'],
         'search_api_saved_searches' => $params['searches'],
       );
-      $title = $settings->options['mail']['notify']['title'];
+      $title = $settings->getTranslatedOption('mail.notify.title', $language->language);
       $message['subject'] .= token_replace($title, $data, array('language' => $language, 'sanitize' => FALSE));
-      $body = $settings->options['mail']['notify']['body'];
+      $body = $settings->getTranslatedOption('mail.notify.body', $language->language);
       $message['body'][] = token_replace($body, $data, array('language' => $language, 'sanitize' => FALSE));
       break;
   }

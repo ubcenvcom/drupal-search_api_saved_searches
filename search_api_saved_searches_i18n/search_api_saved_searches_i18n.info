@@ -1,0 +1,9 @@
+name = Search API saved searches translation
+description = Translate Search API saved searches settings.
+dependencies[] = search_api_saved_searches
+dependencies[] = i18n_string
+core = 7.x
+package = Multilingual - Internationalization
+
+files[] = search_api_saved_searches_i18n.controller.inc
+files[] = search_api_saved_searches_i18n.string_wrapper.inc

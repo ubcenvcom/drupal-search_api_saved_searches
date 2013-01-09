@@ -69,4 +69,38 @@ class SearchApiSavedSearchesSettings extends Entity {
     return $this->index;
   }
 
+  /**
+   * Gets the translated value of an option via i18n string translations.
+   *
+   * @param $property
+   *   The name of the property stored in the options, as declared for i18n;
+   *   e.g. "mail.notify.title".
+   * @param $langcode
+   *   (optional) The language code of the language to which the value should
+   *   be translated. If set to NULL, the default display language is being
+   *   used.
+   *
+   * @return
+   *   The raw, translated property value; or the raw, un-translated value if no
+   *   translation is available.
+   *
+   * @see SearchApiSavedSearchesSettingsI18nController
+   */
+  public function getTranslatedOption($property, $langcode = NULL) {
+    $value = drupal_array_get_nested_value($this->options, explode('.', $property));
+    if (isset($value) && module_exists('search_api_saved_searches_i18n') && function_exists('i18n_string')) {
+      $name = 'search_api_saved_searches:search_api_saved_searches_settings:' . $this->identifier() . ':' . $property;
+      if (is_array($value)) {
+        // Handle arrays of values, i.e. interval_options.
+        foreach ($value as $key => $data) {
+          $value[$key] = i18n_string($name . ".$key", $data, array('langcode' => $langcode, 'sanitize' => FALSE));
+        }
+        return $value;
+      }
+      else {
+        return i18n_string($name, $value, array('langcode' => $langcode, 'sanitize' => FALSE));
+      }
+    }
+    return $value;
+  }
 }

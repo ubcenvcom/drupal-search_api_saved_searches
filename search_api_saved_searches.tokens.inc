@@ -165,7 +165,7 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
             if (empty($settings->options['mail']['notify']['results'])) {
               continue;
             }
-            $text = $settings->options['mail']['notify']['results'];
+            $text = $settings->getTranslatedOption('mail.notify.results', $language_code);
             $params['user'] = $search->user();
             $params['search_api_saved_search_info'] = $info;
             $results[] = token_replace($text, $params, $options);
@@ -207,11 +207,11 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
               if (!empty($data['search_api_saved_search_info']['results'])) {
                 $results = array();
                 $settings = $search->settings();
-                if (empty($settings->options['mail']['notify']['result'])) {
+                $text = $settings->getTranslatedOption('mail.notify.result', $language_code);
+                if (empty($text)) {
                   break;
                 }
                 $item_type = $search->index()->item_type;
-                $text = $settings->options['mail']['notify']['result'];
                 foreach ($data['search_api_saved_search_info']['results'] as $item) {
                   $params = array(
                     $item_type => $item,
