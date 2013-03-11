@@ -145,8 +145,11 @@ function search_api_saved_searches_search_delete_form(array $form, array &$form_
   if ($search->uid) {
     $url = 'user/' . $search->uid . '/saved-searches';
   }
+  elseif (!empty($search->options['page'])) {
+    $url = $search->options['page'];
+  }
   else {
-    $url = $search->url();
+    $url = '<front>';
   }
   $form_state['search'] = $search;
   $form_state['url'] = $url;
