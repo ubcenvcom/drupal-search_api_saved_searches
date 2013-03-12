@@ -142,7 +142,7 @@ function search_api_saved_searches_activate_page(SearchApiSavedSearch $search, $
  * @ingroup forms
  */
 function search_api_saved_searches_search_delete_form(array $form, array &$form_state, SearchApiSavedSearch $search) {
-  if ($search->uid) {
+  if ($search->uid && search_api_saved_search_edit_access(user_load($search->uid))) {
     $url = 'user/' . $search->uid . '/saved-searches';
   }
   elseif (!empty($search->options['page'])) {

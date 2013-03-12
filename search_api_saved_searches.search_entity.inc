@@ -112,7 +112,7 @@ class SearchApiSavedSearch extends Entity {
    * @see entity_save()
    */
   public function save() {
-    if (!$this->enabled && empty($this->options['key'])) {
+    if ((!$this->enabled && empty($this->options['key'])) || !empty($this->settings()->options['registered_user_delete_key'])) {
       $this->options['key'] = drupal_hash_base64(drupal_random_bytes(12));
     }
     if ($this->enabled && !isset($this->results)) {

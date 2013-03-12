@@ -67,8 +67,8 @@ function search_api_saved_searches_menu() {
     'file' => 'search_api_saved_searches.pages.inc',
   );
   $items['search-api/saved-search/%search_api_saved_search/delete'] = array(
-    'title' => 'Activate saved search',
-    'description' => 'Activate a new saved search.',
+    'title' => 'Delete saved search',
+    'description' => 'Delete a saved search.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('search_api_saved_searches_search_delete_form', 2),
     'access callback' => 'search_api_saved_search_edit_access',
@@ -208,6 +208,9 @@ function search_api_saved_searches_user_insert(&$edit, $account, $category) {
   if (!empty($account->status)) {
     foreach (search_api_saved_search_load_multiple(FALSE, array('mail' => $account->mail, 'uid' => 0)) as $search) {
       $search->uid = $account->uid;
+      if (empty($search->settings()->options['registered_user_delete_key'])) {
+        unset($search->options['key']);
+      }
       $search->save();
     }
   }
@@ -223,10 +226,13 @@ function search_api_saved_searches_user_insert(&$edit, $account, $category) {
  * changes.
  */
 function search_api_saved_searches_user_update(&$edit, $account, $category) {
-  // Changes of mail and status (both directions)
+  // Changes of mail and status.
   if (!empty($account->status) && empty($account->original->status)) {
     foreach (search_api_saved_search_load_multiple(FALSE, array('mail' => $account->mail, 'uid' => 0)) as $search) {
       $search->uid = $account->uid;
+      if (empty($search->settings()->options['registered_user_delete_key'])) {
+        unset($search->options['key']);
+      }
       $search->save();
     }
   }
@@ -456,7 +462,7 @@ function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $s
  * @param SearchApiSavedSearch $search
  *   (optional) The saved search involved, if there is just a single one.
  * @param string $key
- *   (optional) The saved search involved, if there is just a single one.
+ *   (optional) The secret key to access the search.
  *
  * @return boolean
  *   TRUE iff the current user is allowed to edit the saved search(es).
@@ -464,8 +470,8 @@ function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $s
 function search_api_saved_search_edit_access($account = NULL, SearchApiSavedSearch $search = NULL, $key = NULL) {
   global $user;
 
-  if (!isset($account)) {
-    if (!isset($search)) {
+  if (empty($account)) {
+    if (empty($search)) {
       return FALSE;
     }
     $account = (object) array('uid' => $search->uid);
@@ -476,34 +482,29 @@ function search_api_saved_search_edit_access($account = NULL, SearchApiSavedSear
   }
   // Barring admins, the only way to edit anonymous users' saved searches is by
   // providing the access key. There is no overview of all saved searches.
+  if (!empty($key) && !empty($search->options['key']) && $search->options['key'] == $key) {
+    return TRUE;
+  }
   if ($account->uid == 0) {
-    if (empty($search) || empty($key)) {
-      return FALSE;
-    }
-    return isset($search->options['key']) && $search->options['key'] == $key;
+    return FALSE;
   }
   if ($account->uid != $user->uid || !user_access('use search_api_saved_searches')) {
     return FALSE;
   }
-  if (isset($search) && $search->uid != $account->uid) {
-    return FALSE;
+  if (isset($search)) {
+    return $search->uid == $account->uid;
   }
-  if (!isset($search)) {
-    // Allow access if users can manually create searches.
-    foreach (search_api_saved_searches_settings_load_multiple() as $settings) {
-      if (!empty($settings->options['manual']['allow'])) {
-        return TRUE;
-      }
-    }
-    // We only let the user view the listing if there are any saved searches.
-    $select = db_select('search_api_saved_search', 's')
-      ->condition('uid', $account->uid);
-    $select->addExpression('COUNT(1)');
-    if (!$select->execute()->fetchField()) {
-      return FALSE;
+  // Allow access if users can manually create searches.
+  foreach (search_api_saved_searches_settings_load_multiple() as $settings) {
+    if (!empty($settings->options['manual']['allow'])) {
+      return TRUE;
     }
   }
-  return TRUE;
+  // We only let the user view the listing if there are any saved searches.
+  $select = db_select('search_api_saved_search', 's')
+    ->condition('uid', $account->uid);
+  $select->addExpression('COUNT(1)');
+  return (bool) $select->execute()->fetchField();
 }
 
 /**
