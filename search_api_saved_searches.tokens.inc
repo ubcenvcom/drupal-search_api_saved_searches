@@ -16,6 +16,7 @@
  * - [search-api-saved-search:created]
  * - [search-api-saved-search:quantity]
  * - [search-api-saved-search:items]
+ * - [search-api-saved-search:results-capped]
  * - [search-api-saved-search:view-url]
  * - [search-api-saved-search:activate-url]
  * - [search-api-saved-search:delete-url]
@@ -27,8 +28,10 @@
  *   search_api_saved_search_info.
  * - search_api_saved_search_info: An associative array containing:
  *   - search: A SearchApiSavedSearch entity object.
+ *   - num_results: An integer telling how many new results there are for this
+ *     saved search.
  *   - results: An array of items of the type that the index associated with
- *     the saved search contains.
+ *     this saved search contains.
  * - search_api_saved_search_result_info: An associative array containing:
  *   - search: A SearchApiSavedSearch entity object.
  *   - entity: An item of the type corresponding to the saved search.
@@ -83,6 +86,10 @@ function search_api_saved_searches_token_info() {
   $search['items'] = array(
     'name' => t('Results'),
     'description' => t('Text listing new results for the saved search.'),
+  );
+  $search['results-capped'] = array(
+    'name' => t('"Displayed results truncated" text'),
+    'description' => t('Text explaining that not all new results were displayed, if applicable.'),
   );
   $search['view-url'] = array(
     'name' => t('View URL'),
@@ -169,8 +176,8 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
         if (isset($tokens['quantity'])) {
           $quantity = 0;
           foreach ($data['search_api_saved_searches'] as $info) {
-            if (isset($info['results'])) {
-              $quantity += count($info['results']);
+            if (isset($info['num_results'])) {
+              $quantity += $info['num_results'];
             }
           }
           $replacements[$tokens['quantity']] = $quantity;
@@ -190,11 +197,11 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
               $replacements[$original] = format_date($search->created, 'medium', '', NULL, $language_code);
               break;
             case 'quantity':
-              $settings = $search->settings();
-              if (empty($settings->options['mail']['notify']['result'])) {
+              if (empty($data['search_api_saved_search_info']['num_results'])) {
+                $replacements[$original] = 0;
                 break;
               }
-              $replacements[$original] = count($data['search_api_saved_search_info']['results']);
+              $replacements[$original] = $data['search_api_saved_search_info']['num_results'];
               break;
             case 'items':
               if (!empty($data['search_api_saved_search_info']['results'])) {
@@ -218,6 +225,15 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
                 $text = implode("\n", $results);
                 $replacements[$original] = $sanitize ? check_plain($text) : $text;
               }
+              break;
+            case 'results-capped':
+              if ($data['search_api_saved_search_info']['num_results'] == count($data['search_api_saved_search_info']['results'])) {
+                $replacements[$original] = '';
+                break;
+              }
+              $text = $settings->getTranslatedOption('mail.notify.results_capped', $language_code);
+              $text = token_replace($text, $data, $options);
+              $replacements[$original] = $sanitize ? check_plain($text) : $text;
               break;
             case 'view-url':
               $replacements[$original] = $search->url();

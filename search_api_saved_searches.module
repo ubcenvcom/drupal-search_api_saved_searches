@@ -922,11 +922,12 @@ function _search_api_saved_searches_create_name(array $query) {
  * - activate:
  *   - search: The SearchApiSavedSearch object that should be activated.
  *   - user: The user object to which the saved search belongs.
- * -notify:
+ * - notify:
  *   - user: The user to which the executed searches belong.
  *   - settings: The settings with which the searches are associated.
  *   - searches: An array containing arrays with the following keys:
  *     - search: A SearchApiSavedSearch object that was checked.
+ *     - num_results: The number of new results for that saved search.
  *     - results: An array of entities representing the new results for that
  *       saved search.
  */
@@ -1049,8 +1050,13 @@ function search_api_saved_searches_check_updates(array $searches) {
           // Let other modules alter these results.
           drupal_alter('search_api_saved_searches_new_results', $new_results, $search);
           if ($new_results) {
+            $num_results = count($new_results);
+            if (!empty($settings->options['mail']['notify']['max_results']) && $num_results > $settings->options['mail']['notify']['max_results']) {
+              $new_results = array_slice($new_results, 0, $settings->options['mail']['notify']['max_results']);
+            }
             $mail_params['searches'][] = array(
               'search' => $search,
+              'num_results' => $num_results,
               'results' => $new_results,
             );
           }

@@ -91,8 +91,10 @@ You can configure your saved searches at the following address:
 
 --  [site:name] team'),
     'results' => t('New results for search "!name_token"', array('!name_token' => '[search-api-saved-search:name]')) .
-        ":\n[search-api-saved-search:items]",
+        ":\n[search-api-saved-search:items]\n[search-api-saved-search:results-capped]",
     'result' => '[search-api-saved-search-result:label] ([search-api-saved-search-result:url])',
+    'max_results' => 0,
+    'results_capped' => "…\n" . t('View all results') . ': [search-api-saved-search:view-url]',
   );
   $settings->options['manual'] += array(
     'allow' => FALSE,
@@ -322,7 +324,7 @@ You can configure your saved searches at the following address:
     '#description' => t('Enter the text that will replace the [search-api-saved-searches:results] variable above. If there are new results for several saved searches of a single user, this text will be inserted multiple times.') . ' ' .
         t('Available variables are: @vars.',
         array('@vars' => '[site:url], [search-api-saved-search:name], [search-api-saved-search:created], ' .
-            '[search-api-saved-search:items], [search-api-saved-search:view-url], ' .
+            '[search-api-saved-search:items], [search-api-saved-search:results-capped], [search-api-saved-search:view-url], ' .
             '[search-api-saved-search:delete-url]')) . ' ' .
         t('The replacement for @var can be configured below.', array('@var' => '[search-api-saved-search:items]')),
     '#default_value' => $options['mail']['notify']['results'],
@@ -346,6 +348,29 @@ You can configure your saved searches at the following address:
     $form['options']['mail']['notify']['result']['#description'] .= ' ' . t('You can also use the @varstyle variables.',
       array('@varstyle' => "[$type:*]"));
   }
+  $form['options']['mail']['notify']['max_results'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of results'),
+    '#description' => t('Maximum number of results per search that will be included in the mail. Specify an integer greater than 0 to limit the results.'),
+    '#default_value' => $options['mail']['notify']['max_results'],
+    '#element_validate' => array('element_validate_integer'),
+  );
+  $form['options']['mail']['notify']['results_capped'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Show text if not all results are displayed'),
+    '#description' => t('Enter the text that will replace the [search-api-saved-search:results-capped] variable above. This text will only be inserted for searches in which the number of new results exceeds the set maximum.') . ' ' .
+        t('Available variables are: @vars.',
+        array('@vars' => '[site:url], [search-api-saved-search:name], [search-api-saved-search:created], ' .
+            '[search-api-saved-search:items], [search-api-saved-search:view-url], ' .
+            '[search-api-saved-search:delete-url]')),
+    '#default_value' => $options['mail']['notify']['results_capped'],
+    '#rows' => 4,
+    '#states' => array(
+      'invisible' => array(
+        ':input[name="options[mail][notify][max_results]"]' => array('value' => 0),
+      ),
+    ),
+  );
 
   $form['options']['manual'] = array(
     '#type' => 'fieldset',
