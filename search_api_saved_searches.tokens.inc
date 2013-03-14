@@ -19,6 +19,7 @@
  * - [search-api-saved-search:results-capped]
  * - [search-api-saved-search:view-url]
  * - [search-api-saved-search:activate-url]
+ * - [search-api-saved-search:edit-url]
  * - [search-api-saved-search:delete-url]
  * - [search-api-saved-search-result:label]
  * - [search-api-saved-search-result:url]
@@ -99,6 +100,11 @@ function search_api_saved_searches_token_info() {
   $search['activate-url'] = array(
     'name' => t('Activate URL'),
     'description' => t('The URL for activating the saved search, if necessary.'),
+    'type' => 'url',
+  );
+  $search['edit-url'] = array(
+    'name' => t('Edit URL'),
+    'description' => t("The URL for editing the saved search's notification interval."),
     'type' => 'url',
   );
   $search['delete-url'] = array(
@@ -242,6 +248,10 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
               $key = isset($search->options['key']) ? '/' . $search->options['key'] : '';
               $replacements[$original] = url('search-api/saved-search/' . $search->id . '/activate' . $key, $url_options);
               break;
+            case 'edit-url':
+              $key = isset($search->options['key']) ? '/' . $search->options['key'] : '';
+              $replacements[$original] = url('search-api/saved-search/' . $search->id . '/edit' . $key, $url_options);
+              break;
             case 'delete-url':
               $key = isset($search->options['key']) ? '/' . $search->options['key'] : '';
               $replacements[$original] = url('search-api/saved-search/' . $search->id . '/delete' . $key, $url_options);
@@ -260,6 +270,12 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
           $key = isset($search->options['key']) ? '/' . $search->options['key'] : '';
           $replacements += token_generate('url', $activate_url_tokens, array(
             'path' => 'search-api/saved-search/' . $search->id . '/activate' . $key,
+          ), $options);
+        }
+        if ($edit_url_tokens = token_find_with_prefix($tokens, 'edit-url')) {
+          $key = isset($search->options['key']) ? '/' . $search->options['key'] : '';
+          $replacements += token_generate('url', $edit_url_tokens, array(
+            'path' => 'search-api/saved-search/' . $search->id . '/edit' . $key,
           ), $options);
         }
         if ($delete_url_tokens = token_find_with_prefix($tokens, 'delete-url')) {

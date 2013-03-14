@@ -66,6 +66,15 @@ function search_api_saved_searches_menu() {
     'access arguments' => array(NULL, 2, 4),
     'file' => 'search_api_saved_searches.pages.inc',
   );
+  $items['search-api/saved-search/%search_api_saved_search/edit'] = array(
+    'title' => 'Edit saved search',
+    'description' => 'Edit a saved search.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('search_api_saved_searches_search_edit_form', 2),
+    'access callback' => 'search_api_saved_search_edit_access',
+    'access arguments' => array(NULL, 2, 4),
+    'file' => 'search_api_saved_searches.pages.inc',
+  );
   $items['search-api/saved-search/%search_api_saved_search/delete'] = array(
     'title' => 'Delete saved search',
     'description' => 'Delete a saved search.',

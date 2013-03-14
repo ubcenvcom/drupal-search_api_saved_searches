@@ -147,10 +147,10 @@ class SearchApiSavedSearch extends Entity {
 
   /**
    * @return SearchApiIndex
-   *   The index this saved search uses.
+   *   The settings this saved search uses.
    *
    * @throws SearchApiException
-   *   If the index doesn't exist.
+   *   If the settings don't exist.
    */
   public function settings() {
     if (!isset($this->settings)) {

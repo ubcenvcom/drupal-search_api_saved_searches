@@ -43,7 +43,7 @@ function search_api_saved_searches_user_listing($account) {
       $created,
       $last_execute,
       $interval,
-      l(t('delete'), $path . '/delete'),
+      l(t('edit'), $path . '/edit') . ' | ' . l(t('delete'), $path . '/delete'),
     );
   }
 
@@ -135,6 +135,83 @@ function search_api_saved_searches_activate_page(SearchApiSavedSearch $search, $
   $msg .= ' ' . t('You will receive e-mail notifications for all new results.');
   $ret['message']['#markup'] = '<p>' . $msg . '</p>';
   return $ret;
+}
+
+/**
+ * Form builder for editing a saved search.
+ *
+ * @param SearchApiSavedSearch $search
+ *   The search to edit.
+ *
+ * @see search_api_saved_searches_search_edit_form_submit()
+ * @ingroup forms
+ */
+function search_api_saved_searches_search_edit_form(array $form, array &$form_state, SearchApiSavedSearch $search) {
+  $form_state['search'] = $search;
+  $settings = $search->settings();
+
+  if ($search->uid) {
+    $form_state['destination']['path'] = 'user/' . $search->uid . '/saved-searches';
+  }
+  elseif (!empty($search->options['page'])) {
+    $form_state['destination'] = array($search->options['page']['path'], $search->options['page']);
+  }
+
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#description' => t('The name that will be displayed for this saved search.'),
+    '#maxlength' => 50,
+    '#required' => TRUE,
+    '#default_value' => $search->name,
+  );
+  if ($settings->options['user_select_interval'] && count($settings->options['interval_options']) > 1) {
+    $form['notify_interval'] = array(
+      '#type' => 'select',
+      '#title' => t('Notification interval'),
+      '#options' => $settings->getTranslatedOption('interval_options'),
+      '#required' => TRUE,
+      '#default_value' => $search->notify_interval,
+    );
+  }
+  $form['actions']['#type'] = 'actions';
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save changes'),
+  );
+  if (!empty($form_state['destination'])) {
+    $form['actions']['cancel'] = array(
+      '#type' => 'link',
+      '#title' => t('Cancel'),
+      '#href' => $form_state['destination']['path'],
+      '#options' => $form_state['destination'],
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Submission handler for search_api_saved_searches_search_edit_form().
+ *
+ * @see search_api_saved_searches_search_edit_form()
+ */
+function search_api_saved_searches_search_edit_form_submit(array $form, array &$form_state) {
+  $values = $form_state['values'];
+  $search = $form_state['search'];
+  $search->name = $values['name'];
+  if (isset($values['notify_interval'])) {
+    $search->notify_interval = $values['notify_interval'];
+  }
+  if ($search->save()) {
+    drupal_set_message(t('Successfully saved your changes.'));
+    if (!empty($form_state['destination'])) {
+      $form_state['redirect'] = $form_state['destination'];
+    }
+  }
+  else {
+    drupal_set_message(t('An error occurred while trying to save the changes.'), 'error');
+  }
 }
 
 /**

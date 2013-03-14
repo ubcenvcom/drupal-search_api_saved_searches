@@ -334,7 +334,7 @@ You can configure your saved searches at the following address:
         t('Available variables are: @vars.',
         array('@vars' => '[site:url], [search-api-saved-search:name], [search-api-saved-search:created], ' .
             '[search-api-saved-search:items], [search-api-saved-search:results-capped], [search-api-saved-search:view-url], ' .
-            '[search-api-saved-search:delete-url]')) . ' ' .
+            '[search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')) . ' ' .
         t('The replacement for @var can be configured below.', array('@var' => '[search-api-saved-search:items]')),
     '#default_value' => $options['mail']['notify']['results'],
     '#rows' => 5,
@@ -346,7 +346,7 @@ You can configure your saved searches at the following address:
     '#description' => t('Enter the text that will replace the [search-api-saved-search:items] variable above. This text will be inserted on a new line once for every new result.') . ' ' .
         t('Available variables are: @vars.',
         array('@vars' => '[site:url], [search-api-saved-search-result:label], [search-api-saved-search-result:url], ' .
-            '[search-api-saved-search:view-url], [search-api-saved-search:delete-url]')),
+            '[search-api-saved-search:view-url], [search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')),
     '#default_value' => $options['mail']['notify']['result'],
     '#rows' => 2,
     '#required' => TRUE,
@@ -371,7 +371,7 @@ You can configure your saved searches at the following address:
         t('Available variables are: @vars.',
         array('@vars' => '[site:url], [search-api-saved-search:name], [search-api-saved-search:created], ' .
             '[search-api-saved-search:items], [search-api-saved-search:view-url], ' .
-            '[search-api-saved-search:delete-url]')),
+            '[search-api-saved-search:edit-url], [search-api-saved-search:delete-url]')),
     '#default_value' => $options['mail']['notify']['results_capped'],
     '#rows' => 4,
     '#states' => array(
