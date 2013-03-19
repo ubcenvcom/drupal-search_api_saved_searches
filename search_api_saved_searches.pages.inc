@@ -23,6 +23,7 @@ function search_api_saved_searches_user_listing($account) {
   $searches = search_api_saved_search_load_multiple(FALSE, array('uid' => $account->uid));
   $rows = array();
   foreach ($searches as $search) {
+    $settings = $search->settings();
     if (empty($search->options['page'])) {
       $name = check_plain($search->name);
     }
@@ -31,7 +32,11 @@ function search_api_saved_searches_user_listing($account) {
     }
     $created = format_date($search->created, 'short');
     $last_execute = t('@time ago', array('@time' => format_interval(REQUEST_TIME - $search->last_execute)));
-    $interval = format_interval($search->notify_interval, 1);
+
+    // Get the translated label for the interval.
+    $available_intervals = $settings->getTranslatedOption('interval_options');
+    $interval = isset($available_intervals[$search->notify_interval]) ? $available_intervals[$search->notify_interval] : format_interval($search->notify_interval, 1);
+
     $path = $base_path . $search->id;
     $rows[] = array(
       $name,
