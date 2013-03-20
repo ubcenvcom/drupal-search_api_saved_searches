@@ -6,3 +6,6 @@ package = Search
 
 files[] = search_api_saved_searches.search_entity.inc
 files[] = search_api_saved_searches.settings_entity.inc
+files[] = views/handler_field_saved_search_interval.inc
+files[] = views/handler_field_saved_search_link.inc
+files[] = views/handler_field_saved_search_name.inc

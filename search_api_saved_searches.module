@@ -169,33 +169,7 @@ function search_api_saved_searches_entity_property_info_alter(array &$info) {
 function search_api_saved_searches_views_api() {
   return array(
     'api' => 3,
-  );
-}
-
-/**
- * Implements hook_views_data_alter().
- *
- * Adds relationships to the creator of a saved search, its settings and the
- * search index.
- */
-function search_api_saved_searches_views_data_alter(array &$data) {
-  $data['search_api_saved_searches_settings']['index_id']['relationship'] = array(
-    'base' => 'search_api_index',
-    'base field' => 'machine_name',
-    'title' => t('Search index'),
-    'label' => t('search index'),
-  );
-  $data['search_api_saved_search']['uid']['relationship'] = array(
-    'base' => 'users',
-    'base field' => 'uid',
-    'title' => t('User'),
-    'label' => t('user'),
-  );
-  $data['search_api_saved_search']['settings_id']['relationship'] = array(
-    'base' => 'search_api_saved_searches_settings',
-    'base field' => 'delta',
-    'title' => t('Settings'),
-    'label' => t('settings'),
+    'path' => drupal_get_path('module', 'search_api_saved_searches') . '/views',
   );
 }
 
