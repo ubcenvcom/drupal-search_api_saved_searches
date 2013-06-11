@@ -316,35 +316,37 @@ function search_api_saved_searches_search_api_saved_searches_settings_delete(Sea
 /**
  * Loads a single settings object.
  *
- * @param $id
+ * @param int|string $id
  *   The settings' identifier or delta.
- * @param $reset
+ * @param bool $reset
  *   If TRUE, will reset the internal entity cache.
  *
  * @return SearchApiSavedSearchesSettings
  *   The requested entity, or FALSE if no settings for that ID exist.
  */
 function search_api_saved_searches_settings_load($id, $reset = FALSE) {
-  $ret = entity_load('search_api_saved_searches_settings', array($id), array(), $reset);
+  $ret = search_api_saved_searches_settings_load_multiple(array($id), array(), $reset);
   return $ret ? reset($ret) : FALSE;
 }
 
 /**
  * Loads multiple settings objects.
  *
- * @param $ids
+ * @param array|false $ids
  *   The settings' identifiers or deltas; or FALSE to load all settings objects.
  * @param array $conditions
  *   Associative array of field => value conditions that returned objects must
  *   satisfy.
- * @param $reset
+ * @param bool $reset
  *   If TRUE, will reset the internal entity cache.
  *
  * @return array
- *   An array of SearchApiSavedSearchesSettings objects matching the conditions.
+ *   An array of SearchApiSavedSearchesSettings objects matching the conditions,
+ *   keyed by delta.
  */
 function search_api_saved_searches_settings_load_multiple($ids = FALSE, array $conditions = array(), $reset = FALSE) {
-  return entity_load_multiple_by_name('search_api_saved_searches_settings', $ids, $conditions, $reset);
+  $settings = entity_load('search_api_saved_searches_settings', $ids, $conditions, $reset);
+  return entity_key_array_by_property($settings, 'delta');
 }
 
 /**
