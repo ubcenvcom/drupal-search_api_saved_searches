@@ -54,6 +54,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
     'registered_choose_mail' => FALSE,
     'choose_name' => FALSE,
     'registered_user_delete_key' => FALSE,
+    'show_empty_list' => FALSE,
     'user_select_interval' => TRUE,
     'interval_options' => array(
       60 * 60 * 24     => t('Daily'),
@@ -194,6 +195,13 @@ You can configure your saved searches at the following address:
     '#description' => t('If enabled, registered users will also get the option to delete their searches via a special link, without logging in.'),
     '#default_value' => $options['registered_user_delete_key'],
     '#parents' => array('options', 'registered_user_delete_key'),
+  );
+  $form['options']['misc']['show_empty_list'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show empty list of saved searches'),
+    '#description' => t('If enabled, the "Saved searches" tab for registered users will even be available when no saved searches were created by them yet.'),
+    '#default_value' => $options['show_empty_list'],
+    '#parents' => array('options', 'show_empty_list'),
   );
 
   // @todo Access options? Maximum number of saved searches per user, maximum

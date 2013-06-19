@@ -224,6 +224,7 @@ function search_api_saved_searches_search_edit_form_submit(array $form, array &$
  * @ingroup forms
  */
 function search_api_saved_searches_search_delete_form(array $form, array &$form_state, SearchApiSavedSearch $search) {
+  $form_state['search'] = $search;
   if ($search->uid && search_api_saved_search_edit_access(user_load($search->uid))) {
     $url = 'user/' . $search->uid . '/saved-searches';
   }
@@ -233,8 +234,6 @@ function search_api_saved_searches_search_delete_form(array $form, array &$form_
   else {
     $url = '<front>';
   }
-  $form_state['search'] = $search;
-  $form_state['url'] = $url;
   return confirm_form($form, t('Do you really want to delete this saved search?'), $url);
 }
 
@@ -244,7 +243,17 @@ function search_api_saved_searches_search_delete_form(array $form, array &$form_
  * @see search_api_saved_searches_search_delete_form()
  */
 function search_api_saved_searches_search_delete_form_submit(array $form, array &$form_state) {
-  $form_state['search']->delete();
+  $search = $form_state['search'];
+  $search->delete();
+  if ($search->uid && search_api_saved_search_edit_access(user_load($search->uid))) {
+    $url = 'user/' . $search->uid . '/saved-searches';
+  }
+  elseif (!empty($search->options['page'])) {
+    $url = $search->options['page'];
+  }
+  else {
+    $url = '<front>';
+  }
   drupal_set_message(t('The saved search was successfully deleted.'));
-  $form_state['redirect'] = $form_state['url'];
+  $form_state['redirect'] = $url;
 }

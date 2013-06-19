@@ -1,5 +1,6 @@
 Search API Saved Searches 1.x, dev (xx/xx/xxxx):
 ------------------------------------------------
+- #2018983 by drunken monkey: Fixed error after deleting last saved search.
 - #2012714 by drunken monkey: Fixed the $reset parameter for load functions.
 
 Search API Saved Searches 1.1 (03/27/2013):

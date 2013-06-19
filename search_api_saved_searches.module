@@ -479,13 +479,17 @@ function search_api_saved_search_edit_access($account = NULL, SearchApiSavedSear
   if (isset($search)) {
     return $search->uid == $account->uid;
   }
-  // Allow access if users can manually create searches.
   foreach (search_api_saved_searches_settings_load_multiple() as $settings) {
+    // Allow access if users can manually create searches.
     if (!empty($settings->options['manual']['allow'])) {
       return TRUE;
     }
+    // Allow access if the list should always be displayed.
+    if (!empty($settings->options['show_empty_list'])) {
+      return TRUE;
+    }
   }
-  // We only let the user view the listing if there are any saved searches.
+  // Let the user view the listing if there are any saved searches.
   $select = db_select('search_api_saved_search', 's')
     ->condition('uid', $account->uid);
   $select->addExpression('COUNT(1)');
