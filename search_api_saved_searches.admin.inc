@@ -227,7 +227,7 @@ You can configure your saved searches at the following address:
   $form['options']['interval']['interval_options'] = array(
     '#type' => 'textarea',
     '#title' => t('Interval options'),
-    '#description' => t('The possible intervals the user can choose from. Enter one value per line, in the format seconds|label.'),
+    '#description' => t('The possible intervals the user can choose from. Enter one value per line, in the format seconds|label. Use a negative value for disabling notifications.'),
     '#default_value' => $interval_options,
     '#parents' => array('options', 'interval_options'),
     '#states' => array(
@@ -255,7 +255,7 @@ You can configure your saved searches at the following address:
   );
   $form['options']['interval']['set_interval_custom'] = array(
     '#type' => 'textfield',
-    '#description' => t('Enter the custom notification interval, in seconds.'),
+    '#description' => t('Enter the custom notification interval, in seconds. Use a negative value to disable notifications.'),
     '#default_value' => isset($interval_options[$options['set_interval']]) ? $options['set_interval'] : 0,
     '#parents' => array('options', 'set_interval_custom'),
     '#states' => array(

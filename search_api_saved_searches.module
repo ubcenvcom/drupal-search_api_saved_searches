@@ -883,7 +883,12 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
   }
   else {
     if ($enabled) {
-      drupal_set_message(t('Your saved search was successfully created. You will receive e-mail notifications for new results in the future.'));
+      if ($search->notify_interval < 0) {
+        drupal_set_message(t('Your saved search was successfully created.'));
+      }
+      else {
+        drupal_set_message(t('Your saved search was successfully created. You will receive e-mail notifications for new results in the future.'));
+      }
     }
     else {
       drupal_set_message(t('Your saved search was successfully created. You will soon receive an e-mail with a confirmation link to activate it.'));
@@ -967,7 +972,7 @@ function search_api_saved_searches_cron() {
   $ids = db_select('search_api_saved_search', 's')
     ->fields('s', array('id'))
     ->condition('enabled', 1)
-    ->where('last_execute + notify_interval < :time', array(':time' => REQUEST_TIME + 15))
+    ->where('notify_interval >= 0 AND last_execute + notify_interval < :time', array(':time' => REQUEST_TIME + 15))
     ->execute()
     ->fetchCol();
   if (!$ids) {

@@ -35,7 +35,15 @@ function search_api_saved_searches_user_listing($account) {
 
     // Get the translated label for the interval.
     $available_intervals = $settings->getTranslatedOption('interval_options');
-    $interval = isset($available_intervals[$search->notify_interval]) ? $available_intervals[$search->notify_interval] : format_interval($search->notify_interval, 1);
+    if (isset($available_intervals[$search->notify_interval])) {
+      $interval = $available_intervals[$search->notify_interval];
+    }
+    elseif ($search->notify_interval < 0) {
+      $interval = t('Never');
+    }
+    else {
+      $interval = format_interval($search->notify_interval, 1);
+    }
 
     $path = $base_path . $search->id;
     $rows[] = array(
@@ -132,7 +140,9 @@ function search_api_saved_searches_activate_page(SearchApiSavedSearch $search, $
     }
     $msg = t('Your saved search was successfully activated.');
   }
-  $msg .= ' ' . t('You will receive e-mail notifications for all new results.');
+  if ($search->notify_interval >= 0) {
+    $msg .= ' ' . t('You will receive e-mail notifications for new results in the future.');
+  }
   $ret['message']['#markup'] = '<p>' . $msg . '</p>';
   return $ret;
 }
