@@ -1042,18 +1042,31 @@ function search_api_saved_searches_check_updates(array $searches) {
         $new = array_diff_key(drupal_map_assoc($results), drupal_map_assoc($old));
         if ($new) {
           // We have new results: send them to the user.
-          $new_results = $index->loadItems($new);
+          // Only load those items that will be sent.
+          $sent_new = $new;
+          if (!empty($settings->options['mail']['notify']['max_results'])) {
+            $sent_new = array_slice($new, 0, $settings->options['mail']['notify']['max_results']);
+          }
+          $sent_new = $index->loadItems($sent_new);
+          $new_results = $sent_new + $new;
           // Let other modules alter these results.
           drupal_alter('search_api_saved_searches_new_results', $new_results, $search);
           if ($new_results) {
-            $num_results = count($new_results);
-            if (!empty($settings->options['mail']['notify']['max_results']) && $num_results > $settings->options['mail']['notify']['max_results']) {
-              $new_results = array_slice($new_results, 0, $settings->options['mail']['notify']['max_results']);
+            // We have to slice again in case some items were moved around or
+            // removed by alter hooks.
+            $sent_new = $new_results;
+            if (!empty($settings->options['mail']['notify']['max_results'])) {
+              $sent_new = array_slice($new_results, 0, $settings->options['mail']['notify']['max_results']);
+              // Now some of the top results might still be unloaded.
+              if ($unloaded = array_filter($sent_new, 'is_scalar')) {
+                $sent_new = $index->loadItems($unloaded) + $sent_new;
+              }
             }
+            $num_results = count($new_results);
             $mail_params['searches'][] = array(
               'search' => $search,
               'num_results' => $num_results,
-              'results' => $new_results,
+              'results' => $sent_new,
             );
           }
         }

@@ -208,19 +208,23 @@ function hook_default_search_api_saved_search_settings_alter(array &$defaults) {
 }
 
 /**
- * Allows other modules to alter or react on new results found for a saved
- * search. The results will then be used to send a mail to the saved search's
- * creator.
+ * Alter or react on new results found for a saved search.
+ *
+ * The results will then be used to send a mail to the saved search's creator.
  *
  * @param array $results
- *   An array of entities representing new results for the search.
+ *   An array of items representing new results for the search. The items that
+ *   would be sent to the user are passed as loaded items, all others are passed
+ *   only by ID.
  * @param SearchApiSavedSearch $search
  *   The saved search that was executed.
  */
 function hook_search_api_saved_searches_new_results_alter(array &$results, SearchApiSavedSearch $search) {
   // Remove all results with an ID that is a multiple of 6.
-  foreach (array_keys($results) as $id) {
-    if ($id % 6 == 0) {
+  foreach ($results as $id => $result) {
+    // Use is_scalar() to make sure we only remove loaded items that would be
+    // sent to the user.
+    if (!is_scalar($result) && $id % 6 == 0) {
       unset($results[$id]);
     }
   }
