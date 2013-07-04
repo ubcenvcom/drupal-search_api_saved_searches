@@ -48,6 +48,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
 
   // Set default options.
   $settings->options += array(
+    'date_field' => NULL,
     'description' => '',
     'default_true' => TRUE,
     'ids_list' => array(),
@@ -137,6 +138,29 @@ You can configure your saved searches at the following address:
     '#collapsible' => TRUE,
     '#collapsed' => $settings->enabled,
   );
+  $fields = array();
+  foreach ($index->getFields() as $key => $field) {
+    if ($field['type'] == 'date') {
+      $fields[$key] = t('Determine by @name', array('@name' => $field['name']));
+    }
+  }
+  if ($fields) {
+    $fields = array(NULL => t('Determine by result ID')) + $fields;
+    $form['options']['misc']['date_field'] = array(
+      '#type' => 'select',
+      '#title' => t('Method for determining new results'),
+      '#description' => t('The method by which to decide which results are new. "Determine by result ID" will internally save the IDs of all results that were previously found by the user and only report results not already reported. (This might use a lot of memory for large result sets.) The other options check whether the date in the selected field is later than the date of last notification.'),
+      '#options' => $fields,
+      '#default_value' => $options['date_field'],
+      '#parents' => array('options', 'date_field'),
+    );
+  }
+  else {
+    $form['options'] = array(
+      '#type' => 'value',
+      '#value' => NULL,
+    );
+  }
   $form['options']['misc']['description'] = array(
     '#type' => 'textarea',
     '#title' => t('Description'),
@@ -205,7 +229,7 @@ You can configure your saved searches at the following address:
   );
 
   // @todo Access options? Maximum number of saved searches per user, maximum
-  //   number of results to create saved search, minimum number of filters ?
+  //   number of results to create saved search, minimum number of filters?
 
   $form['options']['interval'] = array(
     '#type' => 'fieldset',

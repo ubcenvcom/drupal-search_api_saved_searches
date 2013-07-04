@@ -1,5 +1,6 @@
 Search API Saved Searches 1.x, dev (xx/xx/xxxx):
 ------------------------------------------------
+- #2027441 by drunken monkey: Added option to filter by date instead of IDs.
 - #2027449 by drunken monkey: Fixed loading of new result items.
 - #1398300 by Leksat, drunken monkey: Added option for disabling notifications.
 - #2018983 by drunken monkey: Fixed error after deleting last saved search.

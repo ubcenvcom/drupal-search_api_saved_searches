@@ -112,16 +112,15 @@ class SearchApiSavedSearch extends Entity {
    * @see entity_save()
    */
   public function save() {
-    if ((!$this->enabled && empty($this->options['key'])) || !empty($this->settings()->options['registered_user_delete_key'])) {
+    $settings = $this->settings();
+    if ((!$this->enabled && empty($this->options['key'])) || !empty($settings->options['registered_user_delete_key'])) {
       $this->options['key'] = drupal_hash_base64(drupal_random_bytes(12));
     }
-    if ($this->enabled && !isset($this->results)) {
+    $date_field = isset($settings->options['date_field']) ? $settings->options['date_field'] : NULL;
+    if ($this->enabled && !isset($this->results) && !$date_field) {
       $results = array();
       $response = $this->query()->execute();
-      foreach ($response['results'] as $id => $result) {
-        $results[] = $id;
-      }
-      $this->results = implode(',', $results);
+      $this->results = implode(',', array_keys($response['results']));
     }
     $ret = parent::save();
     if ($ret == SAVED_NEW && !$this->enabled) {

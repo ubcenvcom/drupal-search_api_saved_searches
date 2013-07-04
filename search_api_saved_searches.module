@@ -291,6 +291,31 @@ function search_api_saved_searches_search_api_saved_searches_settings_update(Sea
     block_flush_caches();
     cache_clear_all('*', 'cache_block', TRUE);
   }
+
+  // React if the new results determination method was switched to/from the
+  // ID-based method.
+  $options = $settings->options + array('date_field' => NULL);
+  $orig_options = $settings->original->options + array('date_field' => NULL);
+  if ($options['date_field'] != $orig_options['date_field']) {
+    if (!$options['date_field']) {
+      // When we switch to the ID-based method from another one, we need to save
+      // the current results.
+      foreach (search_api_saved_search_load_multiple(FALSE, array('settings_id' => $settings->delta)) as $search) {
+        // This will automatically populate the results.
+        $search->save();
+      }
+    }
+    elseif (!$orig_options['date_field']) {
+      // If we previously used the ID-based method and are now using a
+      // field-based one, set the saved results for all searches to NULL.
+      db_update('search_api_saved_search')
+        ->fields(array(
+          'results' => NULL,
+        ))
+        ->condition('settings_id', $settings->delta)
+        ->execute();
+    }
+  }
 }
 
 /**
@@ -978,15 +1003,6 @@ function search_api_saved_searches_cron() {
   if (!$ids) {
     return;
   }
-  // Set the last execution timestamp now, so the interval doesn't move and we
-  // don't get problems if the next cron run occurrs before the queue is
-  // completely executed.
-  db_update('search_api_saved_search')
-    ->fields(array(
-      'last_execute' => REQUEST_TIME,
-    ))
-    ->condition('id', $ids, 'IN')
-    ->execute();
   // Get the queue and load the queries.
   $queue = DrupalQueue::get('search_api_saved_searches_check_updates');
   $searches = search_api_saved_search_load_multiple($ids);
@@ -999,6 +1015,15 @@ function search_api_saved_searches_cron() {
   foreach ($user_searches as $searches) {
     $queue->createItem($searches);
   }
+  // Set the last execution timestamp now, so the interval doesn't move and we
+  // don't get problems if the next cron run occurrs before the queue is
+  // completely executed.
+  db_update('search_api_saved_search')
+    ->fields(array(
+      'last_execute' => REQUEST_TIME,
+    ))
+    ->condition('id', $ids, 'IN')
+    ->execute();
 }
 
 /**
@@ -1029,17 +1054,24 @@ function search_api_saved_searches_check_updates(array $searches) {
     $index = $settings->index();
     $mail_params = array();
     foreach ($searches as $search) {
-      $old = explode(',', $search->results);
       // Make sure we run the query as the user who owns the saved search.
       // Otherwise node access will not work properly.
       $search->query['options']['search_api_access_account'] = $search->uid;
       // Get actual results for the query.
       $query = $search->query();
+
+      // If a date field is set, use that to filter results.
+      if (!empty($settings->options['date_field'])) {
+        $query->condition($settings->options['date_field'], $search->last_execute, '>');
+      }
       $response = $query->execute();
       if (!empty($response['results'])) {
-        $results = array_keys($response['results']);
-        // Compare these results to the old ones.
-        $new = array_diff_key(drupal_map_assoc($results), drupal_map_assoc($old));
+        $new = $results = drupal_map_assoc(array_keys($response['results']));
+        if (empty($settings->options['date_field'])) {
+          // ID-based method: Compare these results to the old ones.
+          $old = drupal_map_assoc(explode(',', $search->results));
+          $new = array_diff_key($results, $old);
+        }
         if ($new) {
           // We have new results: send them to the user.
           // Only load those items that will be sent.
@@ -1070,7 +1102,7 @@ function search_api_saved_searches_check_updates(array $searches) {
             );
           }
         }
-        if ($new || array_diff($old, $results)) {
+        if (empty($settings->options['date_field']) && ($new || array_diff($old, $results))) {
           // The results changed in some way: store the latest version.
           $search->results = implode(',', $results);
           $search->save();
