@@ -55,4 +55,11 @@ function search_api_saved_searches_views_data_alter(array &$data) {
     'handler' => 'SearchApiSavedSearchesViewsHandlerFieldLink',
     'additional fields' => array('id'),
   );
+  $data['search_api_saved_search']['results']['field'] = array(
+    'title' => t('Results'),
+    'help' => t('The saved search results of this search.'),
+    'handler' => 'entity_views_handler_field_text',
+    'additional fields' => array('id'),
+    'type' => 'list<token>',
+  );
 }

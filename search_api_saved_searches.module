@@ -142,7 +142,8 @@ function search_api_saved_searches_entity_info() {
  *
  * Corrects the types which the Entity API automatically infers from the schema.
  * Otherwise, the "token" types would be "text", and "boolean" and "date" would
- * be "integer".
+ * be "integer". Also, changes saved search results to be a list, not just a CSV
+ * string.
  *
  * Fixing this here automatically also fixes the Views integration provided by
  * the Entity API, regarding these types.
@@ -161,6 +162,28 @@ function search_api_saved_searches_entity_property_info_alter(array &$info) {
   // We can't assign "duration" until Entity API Views integration supports
   // this.
   //$searches['notify_interval']['type'] = 'duration';
+
+  $searches['results']['type'] = 'list<token>';
+  $searches['results']['getter callback'] = 'search_api_saved_searches_get_results_property';
+}
+
+/**
+ * Getter callback for the saved search results property.
+ *
+ * @param SearchApiSavedSearch $search
+ *   The search whose results should be returned.
+ * @param array $options
+ *   Options for the property. Are ignored.
+ * @param string $property
+ *   The property to retrieve. Will always be "results".
+ * @param string $entity_type
+ *   The entity type. Will always be "search_api_saved_search".
+ *
+ * @return array
+ *   An array with the IDs of all stored results.
+ */
+function search_api_saved_searches_get_results_property(SearchApiSavedSearch $search, array $options, $property, $entity_type) {
+  return $search->results ? explode(',', $search->results) : array();
 }
 
 /**
