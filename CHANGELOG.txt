@@ -1,5 +1,8 @@
 Search API Saved Searches 1.x, dev (xx/xx/xxxx):
 ------------------------------------------------
+
+Search API Saved Searches 1.2 (07/21/2013):
+-------------------------------------------
 - #2040469 by drunken monkey: Fixed Views display of saved search results.
 - #2027441 by drunken monkey: Added option to filter by date instead of IDs.
 - #2027449 by drunken monkey: Fixed loading of new result items.
