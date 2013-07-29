@@ -113,6 +113,7 @@ function search_api_saved_searches_entity_info() {
     'entity class' => 'SearchApiSavedSearchesSettings',
     'base table' => 'search_api_saved_searches_settings',
     'uri callback' => 'search_api_saved_searches_settings_url',
+    'access callback' => 'search_api_saved_searches_settings_access',
     'module' => 'search_api_saved_searches',
     'exportable' => TRUE,
     'entity keys' => array(
@@ -126,6 +127,7 @@ function search_api_saved_searches_entity_info() {
     'controller class' => 'EntityAPIController',
     'entity class' => 'SearchApiSavedSearch',
     'base table' => 'search_api_saved_search',
+    'access callback' => 'search_api_saved_search_access',
     'module' => 'search_api_saved_searches',
     'exportable' => FALSE,
     'entity keys' => array(
@@ -201,6 +203,66 @@ function search_api_saved_searches_views_api() {
  */
 function search_api_saved_searches_settings_url(SearchApiSavedSearchesSettings $settings) {
   return array('path' => 'admin/config/search/search_api/index/' . $settings->index_id . '/saved_searches');
+}
+
+/**
+ * Access callback for settings entities.
+ *
+ * @param string $op
+ *   The operation being performed. One of "view", "update", "create" or
+ *   "delete".
+ * @param SearchApiSavedSearchesSettings|null $settings
+ *   (optional) The entity to check access for. If NULL is given, it will be
+ *   determined whether access is allowed for all settings.
+ * @param object|null $account
+ *   The user to check for. NULL to check for the global user.
+ *
+ * @return bool
+ *   Whether access is allowed or not.
+ *
+ * @see entity_access
+ */
+function search_api_saved_searches_settings_access($op, SearchApiSavedSearchesSettings $settings = NULL, $account = NULL) {
+  return user_access('administer search_api_saved_searches', $account);
+}
+
+/**
+ * Access callback for saved search entities.
+ *
+ * @param string $op
+ *   The operation being performed. One of "view", "update", "create" or
+ *   "delete".
+ * @param SearchApiSavedSearch|null $search
+ *   (optional) The entity to check access for. If NULL is given, it will be
+ *   determined whether access is allowed for all searches.
+ * @param object|null $account
+ *   The user to check for. NULL to check for the global user.
+ *
+ * @return bool
+ *   Whether access is allowed or not.
+ *
+ * @see entity_access
+ */
+function search_api_saved_search_access($op, SearchApiSavedSearch $search = NULL, $account = NULL) {
+  if (user_access('administer search_api_saved_searches', $account)) {
+    return TRUE;
+  }
+  if (!$account) {
+    global $user;
+    $account = $user;
+  }
+  switch ($op) {
+    case 'create':
+      return user_access('use search_api_saved_searches', $account);
+
+    default:
+      // If the search was created by an anonymous user, there's no way we can
+      // correctly determine access here.
+      if (!$search || !$search->uid) {
+        return FALSE;
+      }
+      return $search->uid == $account->uid;
+  }
 }
 
 /**

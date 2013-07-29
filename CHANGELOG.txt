@@ -1,5 +1,6 @@
 Search API Saved Searches 1.x, dev (xx/xx/xxxx):
 ------------------------------------------------
+- #2042299 by drunken monkey: Added access callbacks for both entity types.
 
 Search API Saved Searches 1.2 (07/21/2013):
 -------------------------------------------
