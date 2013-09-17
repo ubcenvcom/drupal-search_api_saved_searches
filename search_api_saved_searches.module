@@ -1011,13 +1011,12 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
  * Helper function for creating a name for a saved search with the given query.
  */
 function _search_api_saved_searches_create_name(array $query) {
-  if (!empty($query['original_keys'])) {
-    // @todo This could be an array under some circumstances.
+  if (!empty($query['original_keys']) && is_scalar($query['original_keys'])) {
     $ret[] = $query['original_keys'];
   }
-  // @todo File through filters, looking for things that could go in a name.
-
-  return isset($ret) ? implode(' / ', $ret) : t('Saved search');
+  $name = isset($ret) ? implode(' / ', $ret) : t('Saved search');
+  drupal_alter('search_api_saved_search_create_name', $name, $query);
+  return $name;
 }
 
 /**

@@ -231,5 +231,25 @@ function hook_search_api_saved_searches_new_results_alter(array &$results, Searc
 }
 
 /**
+ * Alters the name assigned to a newly created saved search.
+ *
+ * @param string $name
+ *   The suggested name of the saved search. Likely the search term, or
+ *   the translated string "Saved search".
+ * @param array $query
+ *   An associative array with the following keys:
+ *   - index_id: The machine name of the index the search was run on.
+ *   - keys: The parsed search keys.
+ *   - original_keys: The keys as entered by the user.
+ *   - fields: The fulltext fields searched by the query.
+ *   - filters: An array of filters set for the query, as returned by
+ *     SearchApiQueryFilterInterface::getFilters().
+ *   - options: All options set on the query.
+ */
+function hook_search_api_saved_search_create_name_alter(&$name, array $query) {
+  $name = 'foo';
+}
+
+/**
  * @} End of "addtogroup hooks".
  */
