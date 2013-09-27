@@ -45,13 +45,16 @@ function search_api_saved_searches_user_listing($account) {
       $interval = format_interval($search->notify_interval, 1);
     }
 
+    $edit_options['attributes']['class'][] = 'saved-search-edit';
+    $delete_options['attributes']['class'][] = 'saved-search-delete';
+
     $path = $base_path . $search->id;
     $rows[] = array(
       $name,
       $created,
       $last_execute,
       $interval,
-      l(t('edit'), $path . '/edit') . ' | ' . l(t('delete'), $path . '/delete'),
+      l(t('edit'), $path . '/edit', $edit_options) . ' | ' . l(t('delete'), $path . '/delete', $delete_options),
     );
   }
 
