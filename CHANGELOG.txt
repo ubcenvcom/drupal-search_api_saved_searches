@@ -1,5 +1,5 @@
-Search API Saved Searches 1.x, dev (xx/xx/xxxx):
-------------------------------------------------
+Search API Saved Searches 1.3 (05/24/2014):
+-------------------------------------------
 - #2082325 by balajidharma, drunken monkey: Added classes to edit and delete
   links.
 - #2088045 by leeomara, drunken monkey: Added hook to override generated names.
