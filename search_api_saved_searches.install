@@ -112,6 +112,11 @@ function search_api_saved_searches_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
+      'last_queued' => array(
+        'description' => 'The Unix timestamp when the saved search was last queued.',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
       'last_execute' => array(
         'description' => 'The Unix timestamp when the saved search was last executed.',
         'type' => 'int',
@@ -171,4 +176,24 @@ function search_api_saved_searches_update_7101() {
       ->fields(array('settings_id' => $delta))
       ->execute();
   }
+}
+
+/**
+ * Add {search_api_saved_search}.last_queued for more accurate queue tracking.
+ */
+function search_api_saved_searches_update_7102() {
+  $spec = array(
+    'description' => 'The Unix timestamp when the saved search was last queued.',
+    'type' => 'int',
+    'not null' => TRUE,
+  );
+  db_change_field('search_api_saved_search', 'last_execute', 'last_queued', $spec);
+  $spec['description'] = 'The Unix timestamp when the saved search was last executed.';
+  $spec['not null'] = FALSE;
+  db_add_field('search_api_saved_search', 'last_execute', $spec);
+  db_update('search_api_saved_search')
+    ->expression('last_execute', 'last_queued')
+    ->execute();
+  $spec['not null'] = TRUE;
+  db_change_field('search_api_saved_search', 'last_execute', 'last_execute', $spec);
 }
