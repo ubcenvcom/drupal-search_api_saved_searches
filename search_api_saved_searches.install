@@ -146,8 +146,8 @@ function search_api_saved_searches_schema() {
       ),
     ),
     'indexes' => array(
-      'uid' => array('uid'),
-      'mail' => array('mail'),
+      'user' => array('mail', 'uid'),
+      'notify' => array('enabled', 'notify_interval', 'last_queued', 'last_execute'),
     ),
     'primary key' => array('id'),
   );
@@ -196,4 +196,14 @@ function search_api_saved_searches_update_7102() {
     ->execute();
   $spec['not null'] = TRUE;
   db_change_field('search_api_saved_search', 'last_execute', 'last_execute', $spec);
+}
+
+/**
+ * Optimize indexes on {search_api_saved_search} to improve performance.
+ */
+function search_api_saved_searches_update_7103() {
+  db_drop_index('search_api_saved_search', 'uid');
+  db_drop_index('search_api_saved_search', 'mail');
+  db_add_index('search_api_saved_search', 'user', array('mail', 'uid'));
+  db_add_index('search_api_saved_search', 'notify', array('enabled', 'notify_interval', 'last_queued', 'last_execute'));
 }
