@@ -451,9 +451,8 @@ function search_api_saved_searches_settings_load($id, $reset = FALSE) {
  * @param bool $reset
  *   If TRUE, will reset the internal entity cache.
  *
- * @return array
- *   An array of SearchApiSavedSearchesSettings objects matching the conditions,
- *   keyed by delta.
+ * @return SearchApiSavedSearchesSettings[]
+ *   All saved search settings matching the conditions, keyed by delta.
  */
 function search_api_saved_searches_settings_load_multiple($ids = FALSE, array $conditions = array(), $reset = FALSE) {
   $settings = entity_load('search_api_saved_searches_settings', $ids, $conditions, $reset);
@@ -487,8 +486,8 @@ function search_api_saved_search_load($id, $reset = FALSE) {
  * @param $reset
  *   If TRUE, will reset the internal entity cache.
  *
- * @return array
- *   An array of SearchApiSavedSearch objects matching the conditions.
+ * @return SearchApiSavedSearch[]
+ *   All saved searches matching the conditions, keyed by their IDs.
  */
 function search_api_saved_search_load_multiple($ids = FALSE, array $conditions = array(), $reset = FALSE) {
   return entity_load('search_api_saved_search', $ids, $conditions, $reset);
