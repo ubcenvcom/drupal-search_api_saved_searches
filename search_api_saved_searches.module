@@ -478,12 +478,12 @@ function search_api_saved_search_load($id, $reset = FALSE) {
 /**
  * Loads multiple saved search objects.
  *
- * @param $ids
+ * @param int[]|false $ids
  *   The saved search's IDs; or FALSE to load all saved searches.
  * @param array $conditions
  *   Associative array of field => value conditions that returned objects must
  *   satisfy.
- * @param $reset
+ * @param bool $reset
  *   If TRUE, will reset the internal entity cache.
  *
  * @return SearchApiSavedSearch[]
