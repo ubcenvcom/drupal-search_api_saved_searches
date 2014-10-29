@@ -207,3 +207,19 @@ function search_api_saved_searches_update_7103() {
   db_add_index('search_api_saved_search', 'user', array('mail', 'uid'));
   db_add_index('search_api_saved_search', 'notify', array('enabled', 'notify_interval', 'last_queued', 'last_execute'));
 }
+
+/**
+ * Fix incorrect {search_api_saved_search}.last_queued values.
+ *
+ * This might lead to duplicate mails for saved searches in some rare cases, but
+ * is necessary to prevent saved searches from never being executed at all
+ * anymore in others.
+ *
+ * @see https://www.drupal.org/node/2354863
+ */
+function search_api_saved_searches_update_7104() {
+  db_update('search_api_saved_search')
+    ->expression('last_queued', 'last_execute')
+    ->where('last_queued > last_execute')
+    ->execute();
+}
