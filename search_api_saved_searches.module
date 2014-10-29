@@ -1067,9 +1067,14 @@ function search_api_saved_searches_mail($key, array &$message, array $params) {
 
     case 'notify':
       $settings = $params['settings'];
+      $search = $params['searches'][0]['search'];
       $data = array(
         'user' => $params['user'],
         'search_api_saved_searches' => $params['searches'],
+        'search_api_saved_search_info' => array(
+          'search' => $search,
+          'results' => array(),
+        ),
       );
       $title = $settings->getTranslatedOption('mail.notify.title', $language->language);
       $message['subject'] .= token_replace($title, $data, array('language' => $language, 'sanitize' => FALSE));
