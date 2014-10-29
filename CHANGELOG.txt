@@ -1,5 +1,6 @@
 Search API Saved Searches 1.x, dev (xx/xx/xxxx):
 ------------------------------------------------
+- #1829678 by aschmoe: Fixed render order of "Save search" block in panels.
 - #2354863 by drunken monkey: Fixed alert intervals not being respected.
 - #2300175 by drunken monkey: Added database indexes to improve performance.
 - #2221683 by drunken monkey | rjacobs: Fixed duplicate mails due to overlaps

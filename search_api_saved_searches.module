@@ -625,6 +625,15 @@ function search_api_saved_searches_block_info() {
 }
 
 /**
+ * Implements hook_ctools_block_info().
+ */
+function search_api_saved_searches_ctools_block_info($module, $delta, &$info) {
+  $info['category'] = t('Search API Saved Searches');
+  // Allow blocks to be used before the search results in Panels.
+  $info['render last'] = TRUE;
+}
+
+/**
  * Implements hook_block_configure().
  */
 function search_api_saved_searches_block_configure($delta = '') {
