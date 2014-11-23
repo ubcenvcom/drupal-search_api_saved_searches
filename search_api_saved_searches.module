@@ -1112,9 +1112,9 @@ function search_api_saved_searches_cron() {
   // by settings is necessary since the mails can differ between settings.
   $user_searches = array();
   foreach ($searches as $search) {
-    $user_searches[$search->mail . ' ' . $search->settings_id][] = $search;
+    $user_searches[$search->mail . ' ' . $search->settings_id][] = $search->id;
     // Set the last execution timestamp now, so the interval doesn't move and we
-    // don't get problems if the next cron run occurrs before the queue is
+    // don't get problems if the next cron run occurs before the queue is
     // completely executed.
     $search->last_queued = REQUEST_TIME;
     $search->save();
@@ -1143,16 +1143,33 @@ function search_api_saved_searches_cron_queue_info() {
  *
  * Used as a worker callback for the homonymous cron queue.
  *
- * @param SearchApiSavedSearch[] $searches
- *   An array of SearchApiSavedSearch objects to check for new results. All of
- *   these should have the same mail address and base settings.
+ * @param int[] $search_ids
+ *   The IDs of the saved searches to check for new results. All of these should
+ *   have the same mail address and base settings.
  *
  * @throws SearchApiException
  *   If an error occurred in one of the searches.
  *
  * @see search_api_saved_searches_cron_queue_info()
  */
-function search_api_saved_searches_check_updates(array $searches) {
+function search_api_saved_searches_check_updates(array $search_ids) {
+  if (!$search_ids) {
+    return;
+  }
+  // Since in earlier versions this function got the loaded searches passed
+  // directly instead of just IDs, and there might still be some such items in
+  // the queue when updating to the new style, we have to stay
+  // backwards-compatible here. So, when an array of loaded searches is passed,
+  // we first replace them with their IDs and only then load them again.
+  if (!is_scalar(reset($search_ids))) {
+    /** @var SearchApiSavedSearch[] $searches */
+    $searches = $search_ids;
+    $search_ids = array();
+    foreach ($searches as $search) {
+      $search_ids[] = $search->id;
+    }
+  }
+  $searches = search_api_saved_search_load_multiple($search_ids, array('enabled' => 1));
   if (!$searches) {
     return;
   }
