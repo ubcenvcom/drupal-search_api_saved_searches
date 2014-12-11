@@ -1,5 +1,7 @@
 Search API Saved Searches 1.x, dev (xx/xx/xxxx):
 ------------------------------------------------
+- #2387155 by Dimiona, drunken monkey: Fixed default value for custom
+  notification interval.
 - #2359003 by drunken monkey: Fixed removal of cron queue items of deleted
   searches.
 - #2347243 by queenvictoria, drunken monkey: Added tokens from the first search

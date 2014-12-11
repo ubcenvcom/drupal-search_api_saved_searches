@@ -280,7 +280,7 @@ You can configure your saved searches at the following address:
   $form['options']['interval']['set_interval_custom'] = array(
     '#type' => 'textfield',
     '#description' => t('Enter the custom notification interval, in seconds. Use a negative value to disable notifications.'),
-    '#default_value' => isset($interval_options[$options['set_interval']]) ? $options['set_interval'] : 0,
+    '#default_value' => $options['set_interval'],
     '#parents' => array('options', 'set_interval_custom'),
     '#states' => array(
       'visible' => array(
