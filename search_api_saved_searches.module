@@ -66,6 +66,24 @@ function search_api_saved_searches_menu() {
     'access arguments' => array(NULL, 2, 4),
     'file' => 'search_api_saved_searches.pages.inc',
   );
+  $items['search-api/saved-search/%search_api_saved_search/enable'] = array(
+    'title' => 'Enable/Disable saved search',
+    'description' => 'Enable or disable a saved search.',
+    'page callback' => 'search_api_saved_searches_search_enable',
+    'page arguments' => array(2),
+    'access callback' => 'search_api_saved_search_edit_access',
+    'access arguments' => array(NULL, 2, 4),
+    'file' => 'search_api_saved_searches.pages.inc',
+  );
+  $items['search-api/saved-search/%search_api_saved_search/disable'] = array(
+    'title' => 'Enable/Disable saved search',
+    'description' => 'Enable or disable a saved search.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('search_api_saved_searches_search_disable_form', 2),
+    'access callback' => 'search_api_saved_search_edit_access',
+    'access arguments' => array(NULL, 2, 4),
+    'file' => 'search_api_saved_searches.pages.inc',
+  );
   $items['search-api/saved-search/%search_api_saved_search/edit'] = array(
     'title' => 'Edit saved search',
     'description' => 'Edit a saved search.',
