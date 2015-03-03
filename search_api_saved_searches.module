@@ -291,11 +291,14 @@ function search_api_saved_searches_user_insert(&$edit, $account, $category) {
  * If a user gets activated, associate saved searches with the same mail address
  * with them.
  *
+ * If a user gets deactivated, disable all related saved searches.
+ *
  * Also, change mail address of saved searches when the user mail address
  * changes.
  */
 function search_api_saved_searches_user_update(&$edit, $account, $category) {
-  // Changes of mail and status.
+  // For newly activated users, transfer all saved searches with their mail
+  // address to them.
   if (!empty($account->status) && empty($account->original->status)) {
     foreach (search_api_saved_search_load_multiple(FALSE, array('mail' => $account->mail, 'uid' => 0)) as $search) {
       $search->uid = $account->uid;
@@ -305,6 +308,15 @@ function search_api_saved_searches_user_update(&$edit, $account, $category) {
       $search->save();
     }
   }
+  // If an account gets deactivated/banned, disable all associated searches.
+  if (empty($account->status) && !empty($account->original->status)) {
+    foreach (search_api_saved_search_load_multiple(FALSE, array('uid' => $account->uid)) as $search) {
+      $search->enabled = FALSE;
+      $search->save();
+    }
+  }
+  // If the user's mail address changed, also change the mail address of the
+  // user's saved searches.
   if ($account->mail != $account->original->mail) {
     foreach (search_api_saved_search_load_multiple(FALSE, array('mail' => $account->mail, 'uid' => $account->uid)) as $search) {
       $search->mail = $account->mail;
