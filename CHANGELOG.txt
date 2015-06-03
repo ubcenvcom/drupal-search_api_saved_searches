@@ -1,5 +1,5 @@
-Search API Saved Searches 1.x, dev (xx/xx/xxxx):
-------------------------------------------------
+Search API Saved Searches 1.4 (2015-06-03):
+-------------------------------------------
 - #2346679 by drunken monkey, dcmul: Added display of saved search
   enabled/disabled status to UI.
 - #2346677 by drunken monkey, dcmul: Fixed firing of saved searches for
