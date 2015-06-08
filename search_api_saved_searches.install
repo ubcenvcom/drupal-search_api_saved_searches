@@ -231,7 +231,8 @@ function search_api_saved_searches_update_7105() {
   // Get the UIDs of all inactive users.
   $query = db_select('users', 'u');
   $query->fields('u', array('uid'))
-    ->condition('u.status', 0);
+    ->condition('u.status', 0)
+    ->condition('u.uid', 0, '<>');
 
   // Then, disable all their searches.
   db_update('search_api_saved_search')
