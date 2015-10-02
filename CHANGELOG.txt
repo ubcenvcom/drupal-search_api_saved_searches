@@ -1,5 +1,6 @@
 Search API Saved Searches 1.x, dev (xx/xx/xxxx):
 ------------------------------------------------
+- #1306622 by drunken monkey: Fixed token handling for anonymous users.
 
 Search API Saved Searches 1.5 (2015-06-08):
 -------------------------------------------
