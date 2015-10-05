@@ -438,7 +438,7 @@ You can configure your saved searches at the following address:
   if (!empty($index->options['fields'])) {
     $fields = array();
     foreach ($index->getFields() as $field => $info) {
-      $fields[$field] = $info['name'];
+      $fields[$field] = check_plain($info['name']);
     }
   }
   if (!empty($fields)) {
