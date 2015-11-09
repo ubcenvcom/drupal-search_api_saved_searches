@@ -1,4 +1,4 @@
-Search API Saved Searches 1.x, dev (xx/xx/xxxx):
+Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
 - #2564969 by drunken monkey: Fixed escaping of fields option labels.
 - #1306622 by drunken monkey: Fixed token handling for anonymous users.
