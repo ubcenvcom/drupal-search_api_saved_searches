@@ -946,7 +946,16 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
     unset($fields['search_api_saved_searches_fulltext']);
     foreach ($fields as $field => $value) {
       if ($value || is_numeric($value)) {
-        $query['filters'][] = array($field, $value, '=');
+        if (is_array($value)) {
+          foreach ($value as $key => $single_value) {
+            if ($single_value) {
+              $query['filters'][] = array($field, $single_value, '=');
+            }
+          }
+        }
+        else {
+          $query['filters'][] = array($field, $value, '=');
+        }
       }
       else {
         unset($fields[$field]);
@@ -975,7 +984,16 @@ function search_api_saved_searches_save_form_submit(array $form, array &$form_st
       }
       foreach ($fields as $field => $value) {
         if (empty($page_options['direct_filter_params'])) {
-          $form_state['page']['query']['filter'][$field][] = '"' . $value . '"';
+          if (is_array($value)) {
+            foreach ($value as $key => $single_value) {
+              if ($single_value) {
+                $form_state['page']['query']['f'][] = $field . ':' . $single_value;
+              }
+            }
+          }
+          else {
+            $form_state['page']['query']['f'][] = $field . ':' . $value;
+          }
         }
         else {
           $form_state['page']['query'][$field] = $value;
