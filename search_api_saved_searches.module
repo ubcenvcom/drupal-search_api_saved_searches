@@ -1181,7 +1181,7 @@ function search_api_saved_searches_cron_queue_info() {
   return array(
     'search_api_saved_searches_check_updates' => array(
       'worker callback' => 'search_api_saved_searches_check_updates',
-      'time' => 10,
+      'time' => variable_get('search_api_saved_search_queue_item_time', 10),
     ),
   );
 }
