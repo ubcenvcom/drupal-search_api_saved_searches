@@ -56,6 +56,7 @@ function search_api_saved_searches_index_edit(array $form, array &$form_state, S
     'choose_name' => FALSE,
     'registered_user_delete_key' => FALSE,
     'show_empty_list' => FALSE,
+    'allow_keys_change' => FALSE,
     'user_select_interval' => TRUE,
     'interval_options' => array(
       60 * 60 * 24     => t('Daily'),
@@ -226,6 +227,13 @@ You can configure your saved searches at the following address:
     '#description' => t('If enabled, the "Saved searches" tab for registered users will even be available when no saved searches were created by them yet.'),
     '#default_value' => $options['show_empty_list'],
     '#parents' => array('options', 'show_empty_list'),
+  );
+  $form['options']['misc']['allow_keys_change'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Allow changing of keywords'),
+    '#description' => t("Whether to let users also change the saved search's keywords when editing it."),
+    '#default_value' => $options['allow_keys_change'],
+    '#parents' => array('options', 'allow_keys_change'),
   );
 
   // @todo Access options? Maximum number of saved searches per user, maximum

@@ -1,5 +1,7 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
+- #2597143 by drunken monkey: Added an option to allow users to edit a saved
+  search's keywords.
 - #2532078 by krishna savithraj: Added a hidden setting to give the cron job
   more time to execute.
 - #2602532 by kaptenkolja, drunken monkey: Fixed handling of multi-valued
