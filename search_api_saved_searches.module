@@ -315,6 +315,17 @@ function search_api_saved_searches_user_insert(&$edit, $account, $category) {
  * changes.
  */
 function search_api_saved_searches_user_update(&$edit, $account, $category) {
+  // Sometimes this update hook is invoked without setting $account->original.
+  // In this case, we need to load the original ourselves.
+  if (empty($account->original)) {
+    if (!empty($account->uid)) {
+      $account->original = entity_load_unchanged('user', $account->uid);
+    }
+    // If the original couldn't be loaded, we cannot do anything here.
+    if (empty($account->original)) {
+      return;
+    }
+  }
   // For newly activated users, transfer all saved searches with their mail
   // address to them.
   if (!empty($account->status) && empty($account->original->status)) {
