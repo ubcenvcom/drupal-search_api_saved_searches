@@ -1,5 +1,7 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
+- #2216453 by drunken monkey: Fixed exception for saved searches after fulltext
+  fields change.
 - #2665578 by drunken monkey: Fixed notices caused by missing $original in
   hook_user_update().
 - #2597143 by drunken monkey: Added an option to allow users to edit a saved
