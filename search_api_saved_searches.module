@@ -35,8 +35,8 @@ function search_api_saved_searches_menu() {
     'title' => 'Create saved search',
     'description' => 'Create a new saved search.',
     'page callback' => 'search_api_saved_searches_create_manual',
-    'access callback' => 'search_api_saved_search_create_access',
-    'access arguments' => array(NULL, TRUE),
+    'access callback' => 'search_api_saved_search_create_personal_access',
+    'access arguments' => array(1),
     'type' => MENU_LOCAL_ACTION,
     'file' => 'search_api_saved_searches.pages.inc',
   );
@@ -582,6 +582,29 @@ function search_api_saved_search_create_access(SearchApiSavedSearchesSettings $s
   // @todo Check settings-specific access rules, when there are any.
 
   return TRUE;
+}
+
+/**
+ * Access callback: Checks access for the user-specific "add search" page.
+ *
+ * @param object $account
+ *   The account whose "add search" page is visited.
+ *
+ * @return boolean
+ *   TRUE if the current user is allowed to create a new saved search using this
+ *   page; FALSE otherwise.
+ */
+function search_api_saved_search_create_personal_access($account) {
+  global $user;
+
+  if (user_access('administer search_api_saved_searches')) {
+    return TRUE;
+  }
+  if ($account->uid !== $user->uid) {
+    return FALSE;
+  }
+
+  return search_api_saved_search_create_access(NULL, TRUE);
 }
 
 /**

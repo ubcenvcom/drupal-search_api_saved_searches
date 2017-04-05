@@ -1,5 +1,7 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
+- #2856331 by drunken monkey: Fixed access check for the "Create saved search"
+  page.
 - #2216453 by drunken monkey: Fixed exception for saved searches after fulltext
   fields change.
 - #2665578 by drunken monkey: Fixed notices caused by missing $original in
