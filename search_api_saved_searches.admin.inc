@@ -83,6 +83,7 @@ If you didn't create this saved search, just ignore this mail and it will be del
 --  [site:name] team"),
   );
   $settings->options['mail']['notify'] += array(
+    'send' => TRUE,
     'title' => t('New results for your saved search at [site:name]'),
     'body' => t('[user:name],
 
@@ -341,11 +342,23 @@ You can configure your saved searches at the following address:
     '#required' => TRUE,
   );
 
+  $form['options']['mail']['notify_send'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Send mail notifications for new results'),
+    '#description' => t('Depending on the notification interval, send regular mail updates with new results for saved searches. Disable this option if you want to use some other mechanism to notify the user of new results (or if you do not want any notifications at all).'),
+    '#default_value' => $options['mail']['notify']['send'],
+    '#parents' => array('options', 'mail', 'notify', 'send'),
+  );
   $form['options']['mail']['notify'] = array(
     '#type' => 'fieldset',
     '#title' => t('Notification mails'),
     '#collapsible' => TRUE,
     '#collapsed' => $settings->enabled,
+    '#states' => array(
+      'visible' => array(
+        ':input[name="options[mail][notify][send]"]' => array('checked' => TRUE),
+      ),
+    ),
   );
   $form['options']['mail']['notify']['title'] = array(
     '#type' => 'textfield',
