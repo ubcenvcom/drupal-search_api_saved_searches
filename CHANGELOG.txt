@@ -1,5 +1,5 @@
-Search API Saved Searches 1.x, dev (xxxx-xx-xx):
-------------------------------------------------
+Search API Saved Searches 1.6 (2017-07-18):
+-------------------------------------------
 - #1118138 by MorinLuc0, drunken monkey: Added Rules integration for sending
   notifications.
 - #2856331 by drunken monkey: Fixed access check for the "Create saved search"
