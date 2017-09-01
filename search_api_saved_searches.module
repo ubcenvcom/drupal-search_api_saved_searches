@@ -803,7 +803,7 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
       '#type' => 'textfield',
       '#title' => t('Name'),
       '#description' => t('Enter the name that will be displayed for this saved search.'),
-      '#maxlength' => 50,
+      '#maxlength' => 255,
     );
   }
   else {
@@ -819,7 +819,7 @@ function search_api_saved_searches_save_form(array $form, array &$form_state, Se
       $form['name'] = array(
         '#type' => 'textfield',
         '#title' => t('Name'),
-        '#maxlength' => 50,
+        '#maxlength' => 255,
         '#size' => 16,
         '#required' => TRUE,
         '#default_value' => _search_api_saved_searches_create_name($form_state['query']),

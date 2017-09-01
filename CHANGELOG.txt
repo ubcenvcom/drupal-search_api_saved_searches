@@ -1,5 +1,7 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
+- #2795599 by drunken monkey: Increased the maximum length of saved search
+  names.
 
 Search API Saved Searches 1.6 (2017-07-18):
 -------------------------------------------
