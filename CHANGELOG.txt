@@ -1,5 +1,7 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
+- #2521976 by natew, drunken monkey, lukedekker: Fixed double-encoding of query
+  parameters when displaying saved searches with Views.
 - #2795599 by drunken monkey: Increased the maximum length of saved search
   names.
 
