@@ -1202,9 +1202,9 @@ function search_api_saved_searches_cron() {
 /**
  * Retrieves the saved searches that need to be executed.
  *
- * @param int|null $settings_id
- *   (optional) The ID of the saved search settings entity for which to retrieve
- *   searches. NULL to retrieve for all.
+ * @param string|int|null $settings_id
+ *   (optional) The ID or delta of the saved search settings entity for which to
+ *   retrieve searches. NULL to retrieve for all.
  *
  * @return int[]
  *   The IDs of all searches that need to be executed.
@@ -1220,6 +1220,15 @@ function search_api_saved_searches_get_searches_to_be_executed($settings_id = NU
     ->where('last_execute >= last_queued')
     ->where('last_queued + notify_interval < :time', array(':time' => REQUEST_TIME + 15));
   if ($settings_id !== NULL) {
+    // The {search_api_saved_search} table stores the setting as a machine name.
+    // If the caller passed a numeric ID, we need to convert it.
+    if (is_numeric($settings_id)) {
+      $sql = 'SELECT delta FROM {search_api_saved_searches_settings} WHERE id = :id';
+      $settings_id = db_query($sql, array(':id' => $settings_id))->fetchField();
+      if ($settings_id === FALSE) {
+        return array();
+      }
+    }
     $select->condition('settings_id', $settings_id);
   }
   return $select->execute()->fetchCol();
