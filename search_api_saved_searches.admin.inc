@@ -161,6 +161,7 @@ You can configure your saved searches at the following address:
     $form['options']['misc']['date_field'] = array(
       '#type' => 'value',
       '#value' => NULL,
+      '#parents' => array('options', 'date_field'),
     );
   }
   $form['options']['misc']['description'] = array(
