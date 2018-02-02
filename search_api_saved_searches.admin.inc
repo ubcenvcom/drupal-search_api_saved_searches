@@ -158,7 +158,7 @@ You can configure your saved searches at the following address:
     );
   }
   else {
-    $form['options'] = array(
+    $form['options']['misc']['date_field'] = array(
       '#type' => 'value',
       '#value' => NULL,
     );
