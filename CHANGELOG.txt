@@ -1,7 +1,7 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
-- #2971725 by martin_klima, mh86, drunken monkey: Fixed reaction to user
-  changing mail address.
+- #2971725 by martin_klima, mh86, drunken monkey: Fixed reaction to a user
+  changing their mail address.
 - #2907340 by ClassicCut, drunken monkey: Fixed checking alerts via Rules.
 - #2521976 by natew, drunken monkey, lukedekker: Fixed double-encoding of query
   parameters when displaying saved searches with Views.
