@@ -345,9 +345,9 @@ function search_api_saved_searches_user_update(&$edit, $account, $category) {
     }
   }
   // If the user's mail address changed, also change the mail address of the
-  // user's saved searches.
+  // user's saved searches from previous (original) to current address.
   if ($account->mail != $account->original->mail) {
-    foreach (search_api_saved_search_load_multiple(FALSE, array('mail' => $account->mail, 'uid' => $account->uid)) as $search) {
+    foreach (search_api_saved_search_load_multiple(FALSE, array('mail' => $account->original->mail, 'uid' => $account->uid)) as $search) {
       $search->mail = $account->mail;
       $search->save();
     }
