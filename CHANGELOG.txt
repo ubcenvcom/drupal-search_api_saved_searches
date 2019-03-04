@@ -1,5 +1,7 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
+- #3036088 by martin_klima, klausi, drunken monkey: Added $search to form state
+  in create form submit hanlder.
 
 Search API Saved Searches 1.7 (2018-09-17):
 -------------------------------------------
