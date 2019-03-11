@@ -1127,7 +1127,7 @@ function _search_api_saved_searches_create_name(array $query) {
  *   - settings: The settings with which the searches are associated.
  *   - searches: An array containing arrays with the following keys:
  *     - search: A SearchApiSavedSearch object that was checked.
- *     - num_results: The number of new results for that saved search.
+ *     - result_count: The number of new results for that saved search.
  *     - results: An array of entities representing the new results for that
  *       saved search.
  */

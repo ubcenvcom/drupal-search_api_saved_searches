@@ -29,7 +29,7 @@
  *   search_api_saved_search_info.
  * - search_api_saved_search_info: An associative array containing:
  *   - search: A SearchApiSavedSearch entity object.
- *   - num_results: An integer telling how many new results there are for this
+ *   - result_count: An integer telling how many new results there are for this
  *     saved search.
  *   - results: An array of items of the type that the index associated with
  *     this saved search contains.
@@ -174,6 +174,7 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
         if (isset($tokens['results'])) {
           $results = array();
           foreach ($data['search_api_saved_searches'] as $info) {
+            /** @var SearchApiSavedSearch $search */
             $search = $info['search'];
             $settings = $search->settings();
             if (empty($settings->options['mail']['notify']['results'])) {
@@ -190,8 +191,8 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
         if (isset($tokens['quantity'])) {
           $quantity = 0;
           foreach ($data['search_api_saved_searches'] as $info) {
-            if (isset($info['num_results'])) {
-              $quantity += $info['num_results'];
+            if (isset($info['result_count'])) {
+              $quantity += $info['result_count'];
             }
           }
           $replacements[$tokens['quantity']] = $quantity;
@@ -201,7 +202,9 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
 
     case 'search-api-saved-search':
       if (!empty($data['search_api_saved_search_info']['search'])) {
-        $search = $data['search_api_saved_search_info']['search'];
+        $info = $data['search_api_saved_search_info'];
+        /** @var SearchApiSavedSearch $search */
+        $search = $info['search'];
         foreach ($tokens as $name => $original) {
           switch ($name) {
             case 'name':
@@ -211,14 +214,14 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
               $replacements[$original] = format_date($search->created, 'medium', '', NULL, $language_code);
               break;
             case 'quantity':
-              if (empty($data['search_api_saved_search_info']['num_results'])) {
+              if (empty($info['result_count'])) {
                 $replacements[$original] = 0;
                 break;
               }
-              $replacements[$original] = $data['search_api_saved_search_info']['num_results'];
+              $replacements[$original] = $info['result_count'];
               break;
             case 'items':
-              if (!empty($data['search_api_saved_search_info']['results'])) {
+              if (!empty($info['results'])) {
                 $results = array();
                 $settings = $search->settings();
                 $text = $settings->getTranslatedOption('mail.notify.result', $language_code);
@@ -226,7 +229,7 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
                   break;
                 }
                 $item_type = $search->index()->item_type;
-                foreach ($data['search_api_saved_search_info']['results'] as $item) {
+                foreach ($info['results'] as $item) {
                   $params = array(
                     $item_type => $item,
                     'search_api_saved_search_result_info' => array(
@@ -241,10 +244,11 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
               }
               break;
             case 'results-capped':
-              if ($data['search_api_saved_search_info']['num_results'] == count($data['search_api_saved_search_info']['results'])) {
+              if ($info['result_count'] == count($info['results'])) {
                 $replacements[$original] = '';
                 break;
               }
+              $settings = $search->settings();
               $text = $settings->getTranslatedOption('mail.notify.results_capped', $language_code);
               $text = token_replace($text, $data, $options);
               $replacements[$original] = $sanitize ? check_plain($text) : $text;
@@ -296,11 +300,12 @@ function search_api_saved_searches_tokens($type, array $tokens, array $data = ar
       break;
 
     case 'search-api-saved-search-result':
-      $d = $data['search_api_saved_search_result_info'];
-      if (!empty($d['search']) && !empty($d['entity'])) {
-        $search = $d['search'];
+      $info = $data['search_api_saved_search_result_info'];
+      if (!empty($info['search']) && !empty($info['entity'])) {
+        /** @var SearchApiSavedSearch $search */
+        $search = $info['search'];
         $index = $search->index();
-        $item = $d['entity'];
+        $item = $info['entity'];
         foreach ($tokens as $name => $original) {
           if ($name == 'id' && ($id = $index->datasource()->getItemId($item))) {
             $replacements[$original] = $id;
