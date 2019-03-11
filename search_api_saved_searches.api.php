@@ -105,7 +105,7 @@ function hook_search_api_saved_search_delete(SearchApiSavedSearch $search) {
  *
  * @see hook_entity_load()
  */
-function hook_search_api_saved_search_settings_load(array $entities) {
+function hook_search_api_saved_searches_settings_load(array $entities) {
   $result = db_query('SELECT pid, foo FROM {mytable} WHERE pid IN(:ids)', array(':ids' => array_keys($entities)));
   foreach ($result as $record) {
     $entities[$record->pid]->foo = $record->foo;
@@ -122,10 +122,10 @@ function hook_search_api_saved_search_settings_load(array $entities) {
  *
  * @see hook_entity_insert()
  */
-function hook_search_api_saved_search_settings_insert(SearchApiSavedSearchSettings $settings) {
+function hook_search_api_saved_searches_settings_insert(SearchApiSavedSearchSettings $settings) {
   db_insert('mytable')
     ->fields(array(
-      'id' => entity_id('search_api_saved_search_settings', $settings),
+      'id' => entity_id('search_api_saved_searches_settings', $settings),
       'extra' => print_r($settings, TRUE),
     ))
     ->execute();
@@ -141,7 +141,7 @@ function hook_search_api_saved_search_settings_insert(SearchApiSavedSearchSettin
  *
  * @see hook_entity_presave()
  */
-function hook_search_api_saved_search_settings_presave(SearchApiSavedSearchSettings $settings) {
+function hook_search_api_saved_searches_settings_presave(SearchApiSavedSearchSettings $settings) {
   $settings->options['foo'] = 'bar';
 }
 
@@ -156,10 +156,10 @@ function hook_search_api_saved_search_settings_presave(SearchApiSavedSearchSetti
  *
  * @see hook_entity_update()
  */
-function hook_search_api_saved_search_settings_update(SearchApiSavedSearchSettings $settings) {
+function hook_search_api_saved_searches_settings_update(SearchApiSavedSearchSettings $settings) {
   db_update('mytable')
     ->fields(array('extra' => print_r($settings, TRUE)))
-    ->condition('id', entity_id('search_api_saved_search_settings', $settings))
+    ->condition('id', entity_id('search_api_saved_searches_settings', $settings))
     ->execute();
 }
 
@@ -174,9 +174,9 @@ function hook_search_api_saved_search_settings_update(SearchApiSavedSearchSettin
  *
  * @see hook_entity_delete()
  */
-function hook_search_api_saved_search_settings_delete(SearchApiSavedSearchSettings $settings) {
+function hook_search_api_saved_searches_settings_delete(SearchApiSavedSearchSettings $settings) {
   db_delete('mytable')
-    ->condition('pid', entity_id('search_api_saved_search_settings', $settings))
+    ->condition('pid', entity_id('search_api_saved_searches_settings', $settings))
     ->execute();
 }
 
@@ -186,10 +186,10 @@ function hook_search_api_saved_search_settings_delete(SearchApiSavedSearchSettin
  * @return
  *   An array of default saved search settings, keyed by deltas.
  *
- * @see hook_default_search_api_saved_search_settings_alter()
+ * @see hook_default_search_api_saved_searches_settings_alter()
  */
-function hook_default_search_api_saved_search_settings() {
-  $defaults['main'] = entity_create('search_api_saved_search_settings', array(
+function hook_default_search_api_saved_searches_settings() {
+  $defaults['main'] = entity_create('search_api_saved_searches_settings', array(
     // …
   ));
   return $defaults;
@@ -201,9 +201,9 @@ function hook_default_search_api_saved_search_settings() {
  * @param array $defaults
  *   An array of default saved search settings, keyed by deltas.
  *
- * @see hook_default_search_api_saved_search_settings()
+ * @see hook_default_search_api_saved_searches_settings()
  */
-function hook_default_search_api_saved_search_settings_alter(array &$defaults) {
+function hook_default_search_api_saved_searches_settings_alter(array &$defaults) {
   $defaults['main']->options['foo'] = 'bar';
 }
 

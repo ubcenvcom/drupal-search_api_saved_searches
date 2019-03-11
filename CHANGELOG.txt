@@ -1,5 +1,6 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
+- #3035409 by martin_klima, drunken monkey, klausi: Fixed API docs hook names.
 - #3036088 by martin_klima, klausi, drunken monkey: Added $search to form state
   in create form submit hanlder.
 
