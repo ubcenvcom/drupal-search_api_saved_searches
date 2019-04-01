@@ -1364,7 +1364,7 @@ function search_api_saved_search_fetch_search_results(SearchApiSavedSearch $sear
         // Only load those items that will be sent.
         $sent_new = $new;
         if (!empty($settings->options['mail']['notify']['max_results'])) {
-          $sent_new = array_slice($new, 0, $settings->options['mail']['notify']['max_results']);
+          $sent_new = array_slice($new, 0, $settings->options['mail']['notify']['max_results'], TRUE);
         }
         $new_results = $sent_new + $new;
         // Let other modules alter these results.

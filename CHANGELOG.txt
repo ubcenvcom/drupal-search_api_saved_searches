@@ -1,5 +1,7 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
+- #3042087 by janadam, jakubhnilicka, drunken monkey: Fixed duplicate results
+  reported.
 - #3038333 by janadam, drunken monkey: Fixed the "quantity" token.
 - #3035409 by martin_klima, drunken monkey, klausi: Fixed API docs hook names.
 - #3036088 by martin_klima, klausi, drunken monkey: Added $search to form state
