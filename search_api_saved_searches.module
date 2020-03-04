@@ -707,11 +707,55 @@ function search_api_saved_searches_block_configure($delta = '') {
 }
 
 /**
+ */
+function search_api_saved_searches_is_facet_active() {
+  if (!module_exists('facetapi'))
+    return false;
+
+  $facets=facetapi_get_active_searchers();
+  foreach ($facets as $facet) {
+    $adapter=facetapi_adapter_load($facet);
+    $ai=$adapter->getAllActiveItems();
+    if (count($ai)>0)
+      return true;
+  }
+
+  return false;
+}
+
+/**
+ * Check if we have an active search by the user
+ */
+function search_api_saved_searches_is_search_active(array $searches) {
+  $hasquery=false;
+
+  // See if there is a user provided search string or filter in use
+  foreach ($searches as $id => $data) {
+    list($query, $results) = $data;
+    $keys=$query->getOriginalKeys();
+    if (!empty($keys))
+      $hasquery=true;
+    // XXX: How to check if filter is user supplied or not ?
+    // $filter=$query->getFilter();
+    // dpm($filter->getFilters());
+  }
+
+  // Are faceted search in use or not ?
+  $facet=search_api_saved_searches_is_facet_active();
+
+  return $facet || $hasquery;
+}
+
+/**
  * Implements hook_block_view().
  */
 function search_api_saved_searches_block_view($delta = '') {
   $searches = search_api_current_search();
   if (!$searches) {
+    return false;
+  }
+  $active = search_api_saved_searches_is_search_active($searches);
+  if (!$active) {
     return;
   }
   if (!user_access('use search_api_saved_searches')) {
@@ -736,8 +780,7 @@ function search_api_saved_searches_block_view($delta = '') {
           watchdog('search_api_saved_searches', 'Two matching searches on index %index for saved search block.',
               array('%index' => $settings->index()->name), WATCHDOG_WARNING,
               l(t('view page'), $_GET['q'], array('query' => drupal_get_query_parameters())));
-        }
-        else {
+        } else {
           list($query, $results) = $data;
         }
       }
