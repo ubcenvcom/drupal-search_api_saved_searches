@@ -1223,7 +1223,10 @@ function search_api_saved_searches_get_searches_to_be_executed($settings_id = NU
     ->condition('enabled', 1)
     ->condition('notify_interval', 0, '>=')
     ->where('last_execute >= last_queued')
-    ->where('last_queued + notify_interval < :time', array(':time' => REQUEST_TIME + 15));
+    ->where('last_queued + notify_interval < :time', array(':time' => REQUEST_TIME + 15))
+    // Limit the number of saved searches we load, otherwise we run into PHP
+    // memory errors when the saved search entity load is performed.
+    ->range(0, variable_get('search_api_saved_searches_load_max', 500));
   if ($settings_id !== NULL) {
     // The {search_api_saved_search} table stores the setting as a machine name.
     // If the caller passed a numeric ID, we need to convert it.

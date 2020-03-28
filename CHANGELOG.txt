@@ -1,5 +1,7 @@
 Search API Saved Searches 1.x, dev (xxxx-xx-xx):
 ------------------------------------------------
+- #3114802 by klausi, drunken monkey: Fixed memory error when loading too many
+  saved searches.
 - #3042087 by janadam, jakubhnilicka, drunken monkey: Fixed duplicate results
   reported.
 - #3038333 by janadam, drunken monkey: Fixed the "quantity" token.
